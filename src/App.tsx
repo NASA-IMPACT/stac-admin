@@ -19,6 +19,7 @@ import ItemDetail from "./pages/ItemDetail";
 import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
+import JsonCollectionForm from "./pages/CollectionForm/JsonCollectionForm";
 
 export const App = () => (
   <ChakraProvider theme={theme}>
@@ -40,6 +41,8 @@ export const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/collections/" element={<CollectionList />} />
+              <Route path="/collections/new_collection/" element={<CollectionForm />} />
+              <Route path="/collections/new_collection/json" element={<JsonCollectionForm />} />
               <Route path="/collections/:collectionId/" element={<CollectionDetail />} />
               <Route path="/collections/:collectionId/edit/" element={<CollectionForm />} />
               <Route path="/items/" element={<ItemList />} />

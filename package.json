@@ -20,6 +20,7 @@
     "@types/node": "^12.0.0",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.4",
+    "cors": "^2.8.5",
     "framer-motion": "^6.2.9",
     "mapbox-gl-draw-rectangle-mode": "^1.0.4",
     "maplibre-gl": "^3.6.2",
