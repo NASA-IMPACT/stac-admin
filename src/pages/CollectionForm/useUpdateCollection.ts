@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { StacCollection } from "stac-ts";
 import Api from "../../api";
 import { LoadingState, ApiError } from "../../types";
+import { defaultData } from "./constants/updateDataDefaultValue";
 
 type UseUpdateCollectionType = {
   update: (data: StacCollection, isEditMode: boolean) => Promise<StacCollection>;
@@ -17,18 +18,18 @@ function useUpdateCollection(): UseUpdateCollectionType {
     setState("LOADING");
 
     // Set default values
-    const defaultData = {
-      type: "Collection",
-      links: [],
-      extent: {
-        spatial: {
-          bbox: [[0, 0, 0, 0]],
-        },
-        temporal: {
-          interval: [["2025-01-01T00:00:00Z", "2085-03-31T12:00:00Z"]],
-        },
-      },
-    };
+    // const defaultData = {
+    //   type: "Collection",
+    //   links: [],
+    //   extent: {
+    //     spatial: {
+    //       bbox: [[0, 0, 0, 0]],
+    //     },
+    //     temporal: {
+    //       interval: [["2025-01-01T00:00:00Z", "2085-03-31T12:00:00Z"]],
+    //     },
+    //   },
+    // };
 
     // Merge defaults with provided data
     const requestData = {

@@ -11,6 +11,7 @@ import useUpdateCollection from "./useUpdateCollection";
 import { HeadingLead, Loading } from "../../components";
 import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
 import { usePageTitle } from "../../hooks";
+import { defaultData } from "./constants/updateDataDefaultValue";
 
 function CollectionForm() {
   const { collectionId } = useParams();
@@ -29,30 +30,11 @@ function CollectionForm() {
 
   const { fields, append, remove } = useFieldArray({ control, name: "providers" });
 
-  const defaultJsonStructure = {
-    id: "",
-    type: "Collection",
-    title: "",
-    links: [],
-    description: "",
-    extent: {
-      spatial: {
-        bbox: [[0, 0, 0, 0]]
-      },
-      temporal: {
-        interval: [["2025-01-01T00:00:00Z", "2085-03-31T12:00:00Z"]]
-      }
-    },
-    license: "",
-    stac_extension: [],
-    stac_version: "1.0.0",
-  };
-
   const watchedValues = watch();
 
   useEffect(() => {
     if (!isEditMode) {
-      const updatedJson = { ...defaultJsonStructure, ...watchedValues };
+      const updatedJson = { ...defaultData, ...watchedValues };
       setJsonInput(JSON.stringify(updatedJson, null, 2));
     }
   }, [watchedValues, isEditMode]);
