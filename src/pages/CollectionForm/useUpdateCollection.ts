@@ -17,20 +17,6 @@ function useUpdateCollection(): UseUpdateCollectionType {
   const update = useCallback((data: StacCollection, isEditMode: boolean) => {
     setState("LOADING");
 
-    // Set default values
-    // const defaultData = {
-    //   type: "Collection",
-    //   links: [],
-    //   extent: {
-    //     spatial: {
-    //       bbox: [[0, 0, 0, 0]],
-    //     },
-    //     temporal: {
-    //       interval: [["2025-01-01T00:00:00Z", "2085-03-31T12:00:00Z"]],
-    //     },
-    //   },
-    // };
-
     // Merge defaults with provided data
     const requestData = {
       ...defaultData,
