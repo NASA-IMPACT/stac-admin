@@ -24,8 +24,6 @@ function CollectionList() {
             aria-label="Add new collection"
             icon={<Icon as={MdAdd} />}
             size="md"
-            border="1.5px solid black" // Add black border
-            borderRadius="md" // Optional: Add border radius
           />
         </Link>
       </Box>
