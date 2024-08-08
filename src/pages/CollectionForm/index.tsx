@@ -23,44 +23,49 @@ function CollectionForm() {
   const { update, state: updateState } = useUpdateCollection();
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
+  const [jsonError, setJsonError] = useState("");
 
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
-    defaultValues: isEditMode ? collection : {},
+    defaultValues: isEditMode ? collection : defaultData,
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "providers" });
 
   const watchedValues = watch();
 
+  // Synchronize the form values with the JSON input
   useEffect(() => {
-    if (!isEditMode) {
-      const updatedJson = { ...defaultData, ...watchedValues };
-      setJsonInput(JSON.stringify(updatedJson, null, 2));
+    if (!isJsonMode) {
+      const updatedJson = JSON.stringify(watchedValues, null, 2);
+      setJsonInput(updatedJson);
     }
-  }, [watchedValues, isEditMode]);
+  }, [watchedValues, isJsonMode]);
 
   const onSubmit = (data: StacCollection) => {
     update(data, isEditMode).then(reload);
   };
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setJsonInput(e.target.value);
-  };
+    const newJson = e.target.value;
+    setJsonInput(newJson);
 
-  const handleJsonSubmit = () => {
     try {
-      const parsedData = JSON.parse(jsonInput);
+      const parsedData = JSON.parse(newJson);
       Object.keys(parsedData).forEach(key => {
         setValue(key as keyof FormValues, parsedData[key]);
       });
-      onSubmit(parsedData);
+      setJsonError("");
     } catch (error) {
-      console.error("Invalid JSON input");
+      setJsonError("Invalid JSON format");
     }
   };
 
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
+    if (!isJsonMode) {
+      // Switching to JSON mode, ensure the JSON input is updated with the latest form values
+      setJsonInput(JSON.stringify({ ...defaultData, ...watchedValues }, null, 2));
+    }
   };
 
   if (!collection && isEditMode && state === "LOADING") {
@@ -79,7 +84,7 @@ function CollectionForm() {
           </Button>
         )}
       </Box>
-      {isJsonMode && !isEditMode ? (
+      {isJsonMode ? (
         <Box>
           <Textarea
             value={jsonInput}
@@ -88,9 +93,10 @@ function CollectionForm() {
             size="md"
             minHeight="80vh"
           />
+          {jsonError && <Text color="red.500">{jsonError}</Text>}
           <Box mt="4">
-            <Button onClick={handleJsonSubmit} isLoading={updateState === "LOADING"}>
-              Create collection
+            <Button onClick={handleSubmit(() => onSubmit(JSON.parse(jsonInput)))} isLoading={updateState === "LOADING"}>
+              {isEditMode ? "Save collection" : "Create collection"}
             </Button>
           </Box>
         </Box>

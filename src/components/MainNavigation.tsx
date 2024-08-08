@@ -29,6 +29,7 @@ function MainNavigation() {
         <NavItem to="/">Home</NavItem>
         <NavItem to="/collections/">Collections</NavItem>
         <NavItem to="/items/">Items</NavItem>
+        <NavItem to="/workflows/">Workflows</NavItem>
       </List>
     </Box>
   );
