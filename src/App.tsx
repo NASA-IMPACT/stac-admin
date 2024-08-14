@@ -1,7 +1,10 @@
+import React from "react";
+import { ReactKeycloakProvider } from "@react-keycloak/web";
+import Keycloak from "keycloak-js";
 import {
   BrowserRouter as Router,
   Routes,
-  Route
+  Route,
 } from "react-router-dom";
 import {
   ChakraProvider,
@@ -20,9 +23,15 @@ import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
 
-export const App = () => (
+const keycloakInstance = new Keycloak({
+  realm: "stac-realm",
+  url: "http://localhost:8080",
+  clientId: "stac-admin",
+});
+
+const App = () => (
   <ChakraProvider theme={theme}>
-    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}> {/* eslint-disable-line @typescript-eslint/no-non-null-assertion */}
+    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}>
       <Router>
         <Container mx="auto" p="5" bgColor="white" boxShadow="md">
           <Box
@@ -53,3 +62,11 @@ export const App = () => (
     </StacApiProvider>
   </ChakraProvider>
 );
+
+const WrappedApp = () => (
+  <ReactKeycloakProvider authClient={keycloakInstance}>
+    <App />
+  </ReactKeycloakProvider>
+);
+
+export default WrappedApp;

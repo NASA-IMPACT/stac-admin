@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box } from "@chakra-ui/react";
-import Map, {  type MapRef, type MapLayerMouseEvent, Source, Layer } from "react-map-gl/maplibre";
+// import Map, {  type MapRef, type MapLayerMouseEvent, Source, Layer } from "react-map-gl/maplibre";
+import Map, { MapRef, MapLayerMouseEvent, Source, Layer } from "react-map-gl/maplibre";
 import { StacItem } from "stac-ts";
 import getBbox from "@turf/bbox";
 import { BackgroundTiles } from "../Map";
