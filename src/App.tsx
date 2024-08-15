@@ -53,7 +53,7 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
 // Main App component
 const App = () => (
   <ChakraProvider theme={theme}>
-    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API || "http://default-url"}>
+    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}>
       <Router>
         <Container mx="auto" p="5" bgColor="white" boxShadow="md">
           <Box
