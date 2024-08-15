@@ -1,5 +1,5 @@
-import React from "react";
-import { ReactKeycloakProvider } from "@react-keycloak/web";
+import React, { ReactNode } from "react";
+import { ReactKeycloakProvider, useKeycloak } from "@react-keycloak/web";
 import Keycloak from "keycloak-js";
 import {
   BrowserRouter as Router,
@@ -23,15 +23,37 @@ import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
 
+// Keycloak configuration
 const keycloakInstance = new Keycloak({
   realm: "stac-realm",
-  url: "http://localhost:8080",
+  url: "http://localhost:8080/",  // Ensure the URL is correct
   clientId: "stac-admin",
 });
 
+// PrivateRoute component to protect routes
+interface PrivateRouteProps {
+  children: ReactNode;
+}
+
+const PrivateRoute = ({ children }: PrivateRouteProps) => {
+  const { keycloak, initialized } = useKeycloak();
+
+  if (!initialized) {
+    return <div>Loading...</div>; // Optionally, add a loading spinner or message
+  }
+
+  if (!keycloak || !keycloak.authenticated) {
+    keycloak?.login();  // Ensure keycloak object is not undefined before calling login
+    return null;  // Avoid rendering until login is complete
+  }
+
+  return <>{children}</>;
+};
+
+// Main App component
 const App = () => (
   <ChakraProvider theme={theme}>
-    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}>
+    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API || "http://default-url"}>
       <Router>
         <Container mx="auto" p="5" bgColor="white" boxShadow="md">
           <Box
@@ -47,14 +69,15 @@ const App = () => (
           </Box>
           <Box as="main">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/collections/" element={<CollectionList />} />
-              <Route path="/collections/:collectionId/" element={<CollectionDetail />} />
-              <Route path="/collections/:collectionId/edit/" element={<CollectionForm />} />
-              <Route path="/items/" element={<ItemList />} />
-              <Route path="/collections/:collectionId/items/:itemId/" element={<ItemDetail />} />
-              <Route path="/collections/:collectionId/items/:itemId/edit/" element={<ItemForm />} />
-              <Route path="*" element={<NotFound />} />
+              {/* Protect routes with Keycloak authentication */}
+              <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+              <Route path="/collections/" element={<PrivateRoute><CollectionList /></PrivateRoute>} />
+              <Route path="/collections/:collectionId/" element={<PrivateRoute><CollectionDetail /></PrivateRoute>} />
+              <Route path="/collections/:collectionId/edit/" element={<PrivateRoute><CollectionForm /></PrivateRoute>} />
+              <Route path="/items/" element={<PrivateRoute><ItemList /></PrivateRoute>} />
+              <Route path="/collections/:collectionId/items/:itemId/" element={<PrivateRoute><ItemDetail /></PrivateRoute>} />
+              <Route path="/collections/:collectionId/items/:itemId/edit/" element={<PrivateRoute><ItemForm /></PrivateRoute>} />
+              <Route path="*" element={<PrivateRoute><NotFound /></PrivateRoute>} />
             </Routes>
           </Box>
         </Container>
@@ -63,6 +86,7 @@ const App = () => (
   </ChakraProvider>
 );
 
+// Wrapping the App component with Keycloak provider
 const WrappedApp = () => (
   <ReactKeycloakProvider authClient={keycloakInstance}>
     <App />
