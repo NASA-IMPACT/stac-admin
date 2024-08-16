@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TableContainer, Table, Text, Thead, Tr, Th, Td, Tbody } from "@chakra-ui/react";
-import axiosInstance from "../axiosInstance";
+import axiosInstance from "../axiosInstance"; // Import axiosInstance
 import type { StacCollection } from "stac-ts";
 import { Loading } from "../components";
 import { usePageTitle } from "../hooks";
@@ -15,7 +15,7 @@ function CollectionList() {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await axiosInstance.get("/collections");
+        const response = await axiosInstance.get("/collections"); // Use axiosInstance to fetch collections
         setCollections(response.data.collections);
       } catch (error) {
         console.error("Error fetching collections", error);
