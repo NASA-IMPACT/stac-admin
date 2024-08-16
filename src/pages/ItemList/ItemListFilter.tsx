@@ -2,7 +2,8 @@ import { useState, useRef, useCallback } from "react";
 import { Box, Button, Icon, IconButton, Text, useDisclosure } from "@chakra-ui/react";
 import { MdChevronRight, MdDelete, MdExpandMore } from "react-icons/md";
 import { useCollections } from "@developmentseed/stac-react";
-import Map, { MapRef, Source, Layer } from "react-map-gl/maplibre";
+import Map, { type MapRef, Source, Layer } from "react-map-gl/maplibre";
+// import Map, { MapRef, Source, Layer } from "react-map-gl/maplibre";
 import { StacCollection } from "stac-ts";
 import "maplibre-gl/dist/maplibre-gl.css";
 
