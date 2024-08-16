@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TableContainer, Table, Text, Thead, Tr, Th, Td, Tbody } from "@chakra-ui/react";
-import { useCollections } from "@developmentseed/stac-react";
+import axiosInstance from "../axiosInstance";
 import type { StacCollection } from "stac-ts";
 import { Loading } from "../components";
 import { usePageTitle } from "../hooks";
@@ -8,7 +9,23 @@ import { usePageTitle } from "../hooks";
 function CollectionList() {
   usePageTitle("Collections");
   const navigate = useNavigate();
-  const { collections, state } = useCollections();
+  const [collections, setCollections] = useState<StacCollection[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await axiosInstance.get("/collections");
+        setCollections(response.data.collections);
+      } catch (error) {
+        console.error("Error fetching collections", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, []);
 
   return (
     <>
@@ -22,14 +39,14 @@ function CollectionList() {
             </Tr>
           </Thead>
           <Tbody>
-            { !collections || state === "LOADING" ? (
+            {loading ? (
               <Tr>
                 <Td colSpan={2}>
                   <Loading>Loading collections...</Loading>
                 </Td>
               </Tr>
             ) : (
-              collections.collections.map(({ id }: StacCollection) => (
+              collections?.map(({ id }: StacCollection) => (
                 <Tr
                   key={id}
                   onClick={() => navigate(`/collections/${id}/`)}
@@ -40,7 +57,7 @@ function CollectionList() {
                     <Link
                       to={`/collections/${id}/`}
                       aria-label={`View collection ${id}`}
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       View
                     </Link>
@@ -48,7 +65,7 @@ function CollectionList() {
                     <Link
                       to={`/collections/${id}/edit/`}
                       aria-label={`Edit collection ${id}`}
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Edit
                     </Link>

@@ -1,16 +1,7 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import { ReactKeycloakProvider, useKeycloak } from "@react-keycloak/web";
-import Keycloak from "keycloak-js";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
-import {
-  ChakraProvider,
-  Box,
-  Container,
-} from "@chakra-ui/react";
+import { ChakraProvider, Box, Container } from "@chakra-ui/react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { StacApiProvider } from "@developmentseed/stac-react";
 import theme from "./theme";
 import { MainNavigation } from "./components";
@@ -22,29 +13,19 @@ import ItemDetail from "./pages/ItemDetail";
 import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
-
-// Keycloak configuration
-const keycloakInstance = new Keycloak({
-  realm: "stac-realm",
-  url: "http://localhost:8080/",  // Ensure the URL is correct
-  clientId: "stac-admin",
-});
+import { keycloakInstance } from "./keycloak"; // Ensure this is imported
 
 // PrivateRoute component to protect routes
-interface PrivateRouteProps {
-  children: ReactNode;
-}
-
-const PrivateRoute = ({ children }: PrivateRouteProps) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { keycloak, initialized } = useKeycloak();
 
   if (!initialized) {
-    return <div>Loading...</div>; // Optionally, add a loading spinner or message
+    return <div>Loading...</div>;
   }
 
   if (!keycloak || !keycloak.authenticated) {
-    keycloak?.login();  // Ensure keycloak object is not undefined before calling login
-    return null;  // Avoid rendering until login is complete
+    keycloak?.login();
+    return null;
   }
 
   return <>{children}</>;
