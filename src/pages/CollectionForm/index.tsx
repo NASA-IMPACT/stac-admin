@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Controller, useForm, useFieldArray } from "react-hook-form";
-import { Box, Button, IconButton, Input, Table, Tbody, Td, Text, Th, Thead, Tr, Textarea } from "@chakra-ui/react";
+import { Box, Button, IconButton, Input, Table, Tbody, Td, Text, Th, Thead, Tr, Textarea, Select } from "@chakra-ui/react";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { StacCollection } from "stac-ts";
 import { useCollection } from "@developmentseed/stac-react";
@@ -12,6 +12,7 @@ import { HeadingLead, Loading } from "../../components";
 import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
 import { usePageTitle } from "../../hooks";
 import { defaultData } from "./constants/updateDataDefaultValue";
+import { fetchLicenses, License } from "../../services/licenseService";
 
 function CollectionForm() {
   const { collectionId } = useParams();
@@ -24,6 +25,7 @@ function CollectionForm() {
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
+  const [licenses, setLicenses] = useState<License[]>([]);
 
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
     defaultValues: isEditMode ? collection : defaultData,
@@ -33,7 +35,10 @@ function CollectionForm() {
 
   const watchedValues = watch();
 
-  // Synchronize the form values with the JSON input
+  useEffect(() => {
+    fetchLicenses().then(setLicenses);
+  }, []);
+
   useEffect(() => {
     if (!isJsonMode) {
       const updatedJson = JSON.stringify(watchedValues, null, 2);
@@ -63,7 +68,6 @@ function CollectionForm() {
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
-      // Switching to JSON mode, ensure the JSON input is updated with the latest form values
       setJsonInput(JSON.stringify({ ...defaultData, ...watchedValues }, null, 2));
     }
   };
@@ -119,11 +123,27 @@ function CollectionForm() {
             error={errors.description}
             {...register("description", { required: "Enter a collection description." })}
           />
-          <TextInput
-            label="License"
-            error={errors.license}
-            {...register("license")}
-          />
+
+          {/* License dropdown */}
+          <Box>
+            <label htmlFor="license">License</label>
+            <Controller
+              name="license"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <Select {...field} id="license" overflowY="auto">
+                  <option value="" disabled>Select a license</option>
+                  {licenses.map((license) => (
+                    <option key={license.licenseId} value={license.licenseId}>
+                      {license.licenseId} - {license.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
+            {errors.license && <Text color="red.500">{errors.license.message}</Text>}
+          </Box>
 
           <Controller
             name="keywords"

@@ -1,9 +1,35 @@
 import React, { useState, useEffect } from "react";
-import {Box,Button,Container,Heading,Flex,Text,Input,Table,Tbody,Td,Th,Thead,Tr,IconButton,Textarea,FormControl,FormLabel,FormErrorMessage,Menu,MenuButton,MenuList,MenuItem, Stack} from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Container,
+  Heading,
+  Flex,
+  Text,
+  Input,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  IconButton,
+  Textarea,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Stack,
+  Select,
+} from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useForm, useFieldArray } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { WorkflowFormValues } from "./types";
+import { fetchLicenses, License } from "../../services/licenseService";
 
 const WorkflowPage: React.FC = () => {
   const { handleSubmit, control, register, formState: { errors }, setValue, watch } = useForm<WorkflowFormValues>({
@@ -101,8 +127,14 @@ const WorkflowPage: React.FC = () => {
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [licenses, setLicenses] = useState<License[]>([]);
 
   const watchedValues = watch();
+
+  // Fetch licenses from SPDX
+  useEffect(() => {
+    fetchLicenses().then(setLicenses);
+  }, []);
 
   useEffect(() => {
     if (!isJsonMode) {
@@ -571,10 +603,16 @@ const WorkflowPage: React.FC = () => {
             {/* License */}
             <FormControl isInvalid={!!errors.license} mt={4}>
               <FormLabel>License</FormLabel>
-              <Input
-                placeholder="License"
+              <Select
+                placeholder="Select License"
                 {...register("license", { required: "License is required" })}
-              />
+              >
+                {licenses.map((license) => (
+                  <option key={license.licenseId} value={license.licenseId}>
+                    {license.licenseId} - {license.name}
+                  </option>
+                ))}
+              </Select>
               <FormErrorMessage>{errors.license && errors.license.message}</FormErrorMessage>
             </FormControl>
 
