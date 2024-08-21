@@ -139,7 +139,7 @@ function CollectionForm() {
                       {license.licenseId} - {license.name}
                     </option>
                   ))}
-                  <option value="other">Others</option>
+                  <option value="other">Other</option>
                 </Select>
               )}
             />

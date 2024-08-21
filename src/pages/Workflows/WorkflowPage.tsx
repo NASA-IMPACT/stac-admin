@@ -612,7 +612,7 @@ const WorkflowPage: React.FC = () => {
                     {license.licenseId} - {license.name}
                   </option>
                 ))}
-                <option value="other">Others</option>
+                <option value="other">Other</option>
               </Select>
               <FormErrorMessage>{errors.license && errors.license.message}</FormErrorMessage>
             </FormControl>
