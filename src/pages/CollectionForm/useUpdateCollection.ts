@@ -5,7 +5,7 @@ import { LoadingState, ApiError } from "../../types";
 import { defaultData } from "./constants/updateDataDefaultValue";
 
 type UseUpdateCollectionType = {
-  update: (data: StacCollection, isEditMode: boolean) => Promise<StacCollection>;
+  update: (data: StacCollection, isEditMode: boolean) => Promise<string>;
   error?: ApiError;
   state: LoadingState;
 }
@@ -14,10 +14,9 @@ function useUpdateCollection(): UseUpdateCollectionType {
   const [error, setError] = useState<ApiError>();
   const [state, setState] = useState<LoadingState>("IDLE");
 
-  const update = useCallback((data: StacCollection, isEditMode: boolean) => {
+  const update = useCallback(async (data: StacCollection, isEditMode: boolean) => {
     setState("LOADING");
 
-    // Merge defaults with provided data
     const requestData = {
       ...defaultData,
       ...data,
@@ -39,13 +38,20 @@ function useUpdateCollection(): UseUpdateCollectionType {
 
     const method = isEditMode ? "PUT" : "POST";
 
-    return Api.fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestData),
-    })
-      .catch((e) => setError(e))
-      .finally(() => setState("IDLE"));
+    try {
+      const result = await Api.fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
+      });
+
+      setState("IDLE");
+      return `Successfully ${isEditMode ? "updated" : "created"} the collection.`;
+    } catch (e: any) {
+      setError(e);
+      setState("IDLE");
+      throw e;
+    }
   }, []);
 
   return {

@@ -24,6 +24,11 @@ import {
   MenuItem,
   Stack,
   Select,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  CloseButton,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -128,12 +133,22 @@ const WorkflowPage: React.FC = () => {
   const [jsonError, setJsonError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [licenses, setLicenses] = useState<License[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const watchedValues = watch();
 
   // Fetch licenses from SPDX
   useEffect(() => {
-    fetchLicenses().then(setLicenses);
+    const loadLicenses = async () => {
+      try {
+        const fetchedLicenses = await fetchLicenses();
+        setLicenses(fetchedLicenses);
+      } catch (error) {
+        setErrorMessage("Failed to load licenses. Please try again later.");
+      }
+    };
+    loadLicenses();
   }, []);
 
   useEffect(() => {
@@ -144,14 +159,16 @@ const WorkflowPage: React.FC = () => {
   }, [watchedValues, isJsonMode]);
 
   const handleOptionSelect = (option: string) => {
-    console.log(`Selected option: ${option}`);
     setSelectedOption(option);
     setShowForm(true);
     setIsJsonMode(false);
   };
 
   const onSubmit = async (data: WorkflowFormValues) => {
-    console.log("Workflow executed with data:", data);
+    // Clear previous messages
+    setErrorMessage("");
+    setSuccessMessage("");
+
     try {
       const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
         method: "POST",
@@ -166,8 +183,10 @@ const WorkflowPage: React.FC = () => {
       }
 
       const result = await response.json();
+      setSuccessMessage("Workflow successfully posted.");
       console.log("Workflow successfully posted:", result);
     } catch (error) {
+      setErrorMessage("Error posting workflow. Please try again.");
       console.error("Error posting workflow:", error);
     }
   };
@@ -260,6 +279,29 @@ const WorkflowPage: React.FC = () => {
           </Button>
         )}
       </Flex>
+
+      {successMessage && (
+        <Alert status="success" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
+        </Alert>
+      )}
+
+      {errorMessage && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setErrorMessage("")} />
+        </Alert>
+      )}
+
       <Box
         bg="gray.50"
         p={6}
@@ -337,7 +379,6 @@ const WorkflowPage: React.FC = () => {
               <FormErrorMessage>{errors.data_type && errors.data_type.message}</FormErrorMessage>
             </FormControl>
 
-            
             {/* SpatialExtent Form */}
             <fieldset>
               <legend>Spatial Extent</legend>
@@ -436,7 +477,6 @@ const WorkflowPage: React.FC = () => {
                 {errors.temporal_extent && "Both start and end date are required"}
               </FormErrorMessage>
             </fieldset>
-
 
             {/* STAC Version */}
             <FormControl isInvalid={!!errors.stac_version} mt={4}>

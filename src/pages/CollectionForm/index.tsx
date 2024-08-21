@@ -1,18 +1,38 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Controller, useForm, useFieldArray } from "react-hook-form";
-import { Box, Button, IconButton, Input, Table, Tbody, Td, Text, Th, Thead, Tr, Textarea, Select } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Textarea,
+  Text,
+  Input,
+  Select,
+  IconButton,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  CloseButton,
+} from "@chakra-ui/react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
-import { StacCollection } from "stac-ts";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
-
-import { FormValues } from "./types";
+import { fetchLicenses, License } from "../../services/licenseService";
 import useUpdateCollection from "./useUpdateCollection";
-import { HeadingLead, Loading } from "../../components";
+
+import { HeadingLead } from "../../components/HeadingLead";
 import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
+
+import { StacCollection } from "stac-ts";
+import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
 import { defaultData } from "./constants/updateDataDefaultValue";
-import { fetchLicenses, License } from "../../services/licenseService";
 
 function CollectionForm() {
   const { collectionId } = useParams();
@@ -21,11 +41,13 @@ function CollectionForm() {
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
 
   const { collection, state, reload } = useCollection(collectionId!);
-  const { update, state: updateState } = useUpdateCollection();
+  const { update, error, state: updateState } = useUpdateCollection();
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [licenses, setLicenses] = useState<License[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
     defaultValues: isEditMode ? collection : defaultData,
@@ -36,7 +58,15 @@ function CollectionForm() {
   const watchedValues = watch();
 
   useEffect(() => {
-    fetchLicenses().then(setLicenses);
+    const loadLicenses = async () => {
+      try {
+        const fetchedLicenses = await fetchLicenses();
+        setLicenses(fetchedLicenses);
+      } catch (error) {
+        setErrorMessage("Failed to load licenses. Please try again later.");
+      }
+    };
+    loadLicenses();
   }, []);
 
   useEffect(() => {
@@ -46,8 +76,18 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
-  const onSubmit = (data: StacCollection) => {
-    update(data, isEditMode).then(reload);
+  const onSubmit = async (data: StacCollection) => {
+    // Clear previous messages
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    try {
+      const message = await update(data, isEditMode);
+      setSuccessMessage(message);
+      reload();
+    } catch (error: any) {
+      setErrorMessage(error.message || "An error occurred while saving the collection.");
+    }
   };
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -72,10 +112,6 @@ function CollectionForm() {
     }
   };
 
-  if (!collection && isEditMode && state === "LOADING") {
-    return <Loading>Loading collection...</Loading>;
-  }
-
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -88,6 +124,29 @@ function CollectionForm() {
           </Button>
         )}
       </Box>
+
+      {successMessage && (
+        <Alert status="success" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
+        </Alert>
+      )}
+
+      {errorMessage && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setErrorMessage("")} />
+        </Alert>
+      )}
+
       {isJsonMode ? (
         <Box>
           <Textarea
