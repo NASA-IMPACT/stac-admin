@@ -246,52 +246,6 @@ export default function ItemForm() {
     }
   }, [watchedValues, isJsonMode]);
 
-  // const onSubmit = async (data: FormValues) => {
-  //   try {
-  //     // Ensure the datetime fields have timezone information
-  //     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
-  //       data.properties.datetime += "Z";
-  //     }
-  //     if (data.properties.start_datetime && !data.properties.start_datetime.endsWith("Z")) {
-  //       data.properties.start_datetime += "Z";
-  //     }
-  //     if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
-  //       data.properties.end_datetime += "Z";
-  //     }
-  
-  //     console.log("Data to be submitted:", JSON.stringify(data, null, 2)); // Log data before sending
-  
-  //     let response;
-  //     if (isNewItem) {
-  //       const postUrl = `http://localhost:8081/collections/${selectedCollectionId}/items`;
-  //       response = await Api.fetch(postUrl, {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify(data),
-  //       });
-  //     } else {
-  //       response = await update(data);
-  //       reload();
-  //     }
-  
-  //     if (!response || !response.ok) {
-  //       let errorDetails = "Unknown error";
-  //       if (response) {
-  //         const contentType = response.headers ? response.headers.get("Content-Type") : null;
-  //         if (contentType && contentType.includes("application/json")) {
-  //           errorDetails = await response.json();
-  //         } else {
-  //           errorDetails = await response.text();
-  //         }
-  //       }
-  //       throw new Error(`API Error: ${response ? response.statusText : "No Response"} - ${errorDetails}`);
-  //     }
-  //   } catch (error) {
-  //     console.error("Submit error:", error);
-  //     alert(`An error occurred: ${error.message}`);
-  //   }
-  // };
-  
   const onSubmit = async (data: FormValues) => {
     // Ensure the datetime fields have timezone information
     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
@@ -315,12 +269,21 @@ export default function ItemForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      if (response) {
+        alert("Issue is successfully created");
+      } else {
+        alert("Failed to create item");
+      }
     } else {
       response = await update(data);
+      if (response) {
+        alert("Issue is successfully saved");
+      } else {
+        alert("Failed to save item");
+      }
+      reload();
     }
   };  
-  
-  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
@@ -402,11 +365,13 @@ export default function ItemForm() {
             {isNewItem ? "Add New Item" : `Edit Item ${item?.id}`}
           </HeadingLead>
         </Text>
-        <Button type="button" onClick={toggleJsonMode}>
-          {isJsonMode ? "Form" : "JSON"}
-        </Button>
+        {isNewItem && (
+          <Button type="button" onClick={toggleJsonMode}>
+            {isJsonMode ? "Form" : "JSON"}
+          </Button>
+        )}
       </Box>
-      {isJsonMode ? (
+      {isNewItem && isJsonMode ? (
         <Box>
           <Textarea
             value={jsonInput}
@@ -421,7 +386,7 @@ export default function ItemForm() {
               onClick={handleSubmit(() => onSubmit(JSON.parse(jsonInput)))}
               isLoading={updateState === "LOADING"}
             >
-              {isNewItem ? "Create Item" : "Save Item"}
+              Create Item
             </Button>
           </Box>
         </Box>
