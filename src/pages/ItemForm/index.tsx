@@ -262,7 +262,7 @@ export default function ItemForm() {
   
     let response;
     if (isNewItem) {
-      const postUrl = `http://localhost:8081/collections/${selectedCollectionId}/items`;
+      const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
   
       response = await Api.fetch(postUrl, {
         method: "POST",
