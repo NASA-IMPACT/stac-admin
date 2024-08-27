@@ -1,29 +1,28 @@
-import React from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
   Button,
   Text,
+  Input,
+  Textarea,
   Table,
   Thead,
   Tr,
   Th,
   Tbody,
   Td,
-  Input,
   IconButton,
   RadioGroup,
   Stack,
   Radio,
   Select,
-  Textarea,
 } from "@chakra-ui/react";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FormValues } from "./types";
-import { HeadingLead, Loading } from "../../components";
+import { Loading, HeadingLead } from "../../components";
 import useUpdateItem from "./useUpdateItem";
 import Api from "../../api";
 import { usePageTitle } from "../../hooks";
@@ -36,44 +35,108 @@ import {
   DateTimeInput,
 } from "../../components/forms";
 
-// Custom input for bbox (array of numbers)
-const BBoxInput: React.FC<BBoxInputProps> = ({ register, errors }) => {
-  return (
-    <fieldset>
-      <legend>Bounding Box</legend>
-      <Box display="flex" gap="2">
-        <Input
-          placeholder="minX"
-          type="number"
-          {...register("bbox[0]", { valueAsNumber: true })}
-        />
-        <Input
-          placeholder="minY"
-          type="number"
-          {...register("bbox[1]", { valueAsNumber: true })}
-        />
-        <Input
-          placeholder="maxX"
-          type="number"
-          {...register("bbox[2]", { valueAsNumber: true })}
-        />
-        <Input
-          placeholder="maxY"
-          type="number"
-          {...register("bbox[3]", { valueAsNumber: true })}
-        />
-      </Box>
-      {errors?.bbox && <p>{errors.bbox.message}</p>}
-    </fieldset>
-  );
+// Assume that these default values are predefined for new items
+const defaultValues = {
+  id: "",
+  type: "Feature",
+  stac_version: "1.0.0",
+  stac_extensions: ["https://example.com/extension"],
+  collection: "",
+  links: [
+    {
+      href: "string",
+      rel: "string",
+      type: "image/tiff; application=geotiff",
+      title: "string",
+      label: "assets",
+      additionalProp1: {},
+    },
+  ],
+  assets: {
+    thumbnail: {
+      href: "https://example.com/thumbnail.png",
+      title: "Thumbnail",
+      type: "image/png",
+    },
+  },
+  geometry: {
+    type: "Polygon",
+    coordinates: [
+      [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+        [0, 10],
+        [0, 0],
+      ],
+    ],
+  },
+  bbox: [0, 0, 10, 10], // Example bbox initialization
+  properties: {
+    title: "testing",
+    description: "string",
+    datetime: "2024-08-26T22:12:31.927Z",
+    created: "2024-08-26T22:12:31.927Z",
+    updated: "2024-08-26T22:12:31.927Z",
+    start_datetime: "2024-08-26T22:12:31.927Z",
+    end_datetime: "2024-08-26T22:12:31.927Z",
+    license: "string",
+    providers: [
+      {
+        name: "string",
+        description: "string",
+        roles: ["producer"],
+        url: "string",
+      },
+    ],
+    platform: "string",
+    constellation: "string",
+    mission: "string",
+    gsd: 1,
+    instruments: ["string"],
+  },
 };
 
-// Define prop types for AssetsInput
+interface BBoxInputProps {
+  register: any;
+  errors: any;
+}
+
 interface AssetsInputProps {
   control: any;
   register: any;
   errors: any;
 }
+
+// Custom input for bbox (array of numbers)
+const BBoxInput: React.FC<BBoxInputProps> = ({ register, errors }) => (
+  <fieldset>
+    <legend>Bounding Box</legend>
+    <Box display="flex" gap="2">
+      <Input
+        placeholder="minX"
+        type="number"
+        {...register("bbox[0]", { valueAsNumber: true })}
+      />
+      <Input
+        placeholder="minY"
+        type="number"
+        {...register("bbox[1]", { valueAsNumber: true })}
+      />
+      <Input
+        placeholder="maxX"
+        type="number"
+        {...register("bbox[2]", { valueAsNumber: true })}
+      />
+      <Input
+        placeholder="maxY"
+        type="number"
+        {...register("bbox[3]", { valueAsNumber: true })}
+      />
+    </Box>
+    {errors?.bbox && <p>{errors.bbox.message}</p>}
+  </fieldset>
+);
 
 // Custom input for assets (object with dynamic keys)
 const AssetsInput: React.FC<AssetsInputProps> = ({ control, register, errors }) => {
@@ -153,10 +216,10 @@ export default function ItemForm() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     collectionId || ""
   );
-  const [isJsonMode, setJsonMode] = useState(false);
+
+  const [isJsonMode, setJsonMode] = useState(false); // Ensure this is initialized before use
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
-
   const {
     control,
     register,
@@ -165,45 +228,8 @@ export default function ItemForm() {
     setValue,
     watch,
   } = useForm<FormValues>({
-    defaultValues: isNewItem ? {
-      id: "",
-      type: "Feature",
-      stac_version: "1.0.0",
-      stac_extensions: [],
-      collection: selectedCollectionId,
-      links: [],
-      assets: {}, // Initialize as an empty object
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [0, 0],
-            [10, 0],
-            [10, 10],
-            [0, 10],
-            [0, 0],
-          ],
-        ],
-      },
-      bbox: [0, 0, 10, 10], // Example bbox initialization
-      properties: {
-        title: "",
-        description: "",
-        datetime: new Date().toISOString(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(), 
-        start_datetime: new Date().toISOString(),
-        end_datetime: new Date().toISOString(),
-        license: "",
-        providers: [{ name: "", description: "", roles: [], url: "" }],
-        platform: "",
-        constellation: "",
-        mission: "",
-        gsd: 1,
-        instruments: [],
-      },
-    }
-      : item,
+    defaultValues: isNewItem ? defaultValues : undefined,
+    values: !isNewItem ? item : undefined,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -220,23 +246,82 @@ export default function ItemForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  // const onSubmit = async (data: FormValues) => {
+  //   try {
+  //     // Ensure the datetime fields have timezone information
+  //     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
+  //       data.properties.datetime += "Z";
+  //     }
+  //     if (data.properties.start_datetime && !data.properties.start_datetime.endsWith("Z")) {
+  //       data.properties.start_datetime += "Z";
+  //     }
+  //     if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
+  //       data.properties.end_datetime += "Z";
+  //     }
+  
+  //     console.log("Data to be submitted:", JSON.stringify(data, null, 2)); // Log data before sending
+  
+  //     let response;
+  //     if (isNewItem) {
+  //       const postUrl = `http://localhost:8081/collections/${selectedCollectionId}/items`;
+  //       response = await Api.fetch(postUrl, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(data),
+  //       });
+  //     } else {
+  //       response = await update(data);
+  //       reload();
+  //     }
+  
+  //     if (!response || !response.ok) {
+  //       let errorDetails = "Unknown error";
+  //       if (response) {
+  //         const contentType = response.headers ? response.headers.get("Content-Type") : null;
+  //         if (contentType && contentType.includes("application/json")) {
+  //           errorDetails = await response.json();
+  //         } else {
+  //           errorDetails = await response.text();
+  //         }
+  //       }
+  //       throw new Error(`API Error: ${response ? response.statusText : "No Response"} - ${errorDetails}`);
+  //     }
+  //   } catch (error) {
+  //     console.error("Submit error:", error);
+  //     alert(`An error occurred: ${error.message}`);
+  //   }
+  // };
+  
   const onSubmit = async (data: FormValues) => {
+    // Ensure the datetime fields have timezone information
+    if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
+      data.properties.datetime += "Z";
+    }
+    if (data.properties.start_datetime && !data.properties.start_datetime.endsWith("Z")) {
+      data.properties.start_datetime += "Z";
+    }
+    if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
+      data.properties.end_datetime += "Z";
+    }
+  
     console.log("Submitting data:", data);
   
+    let response;
     if (isNewItem) {
       const postUrl = `http://localhost:8081/collections/${selectedCollectionId}/items`;
   
-      const response = await Api.fetch(postUrl, {
+      response = await Api.fetch(postUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     } else {
-      update(data).then(reload);
+      response = await update(data);
     }
-  };
+  };  
   
   
+
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
     setJsonInput(newJson);
@@ -245,9 +330,9 @@ export default function ItemForm() {
       const parsedData = JSON.parse(newJson);
       Object.keys(parsedData).forEach((key) => {
         if (key === "bbox") {
-          setValue(key, parsedData[key]); // Handle bbox as an array
+          setValue(key, parsedData[key]); 
         } else if (key === "assets") {
-          setValue(key, parsedData[key]); // Handle assets as an object
+          setValue(key, parsedData[key]); 
         } else {
           setValue(key as keyof FormValues, parsedData[key]);
         }
