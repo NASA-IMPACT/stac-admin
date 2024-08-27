@@ -48,6 +48,7 @@ export const App = () => {
                 <Route path="/collections/:collectionId/" element={<CollectionDetail />} />
                 <Route path="/collections/:collectionId/edit/" element={<CollectionForm />} />
                 <Route path="/items/" element={<ItemList />} />
+                <Route path="items/new_item/" element={<ItemForm />} />
                 <Route path="/collections/:collectionId/items/:itemId/" element={<ItemDetail />} />
                 <Route path="/collections/:collectionId/items/:itemId/edit/" element={<ItemForm />} />
                 {workflowsEnabled && (
