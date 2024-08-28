@@ -217,9 +217,11 @@ export default function ItemForm() {
     collectionId || ""
   );
 
-  const [isJsonMode, setJsonMode] = useState(false); // Ensure this is initialized before use
+  const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
+  const [message, setMessage] = useState<string | null>(null); // Add state for the message
+
   const {
     control,
     register,
@@ -257,33 +259,30 @@ export default function ItemForm() {
     if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
       data.properties.end_datetime += "Z";
     }
+    
+    try {
+      let message;
+      if (isNewItem) {
+        const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
   
-    console.log("Submitting data:", data);
-  
-    let response;
-    if (isNewItem) {
-      const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
-  
-      response = await Api.fetch(postUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (response) {
-        alert("Issue is successfully created");
+        await Api.fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        message = "Successfully created the new item.";
       } else {
-        alert("Failed to create item");
+        await update(data);
+        message = "Successfully updated the item.";
+        reload();
       }
-    } else {
-      response = await update(data);
-      if (response) {
-        alert("Issue is successfully saved");
-      } else {
-        alert("Failed to save item");
-      }
-      reload();
+      return message;
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      return "Failed to submit the item.";
     }
-  };  
+  };
+  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
@@ -292,13 +291,7 @@ export default function ItemForm() {
     try {
       const parsedData = JSON.parse(newJson);
       Object.keys(parsedData).forEach((key) => {
-        if (key === "bbox") {
-          setValue(key, parsedData[key]); 
-        } else if (key === "assets") {
-          setValue(key, parsedData[key]); 
-        } else {
-          setValue(key as keyof FormValues, parsedData[key]);
-        }
+        setValue(key as keyof FormValues, parsedData[key]);
       });
       setJsonError("");
     } catch (error) {
@@ -329,24 +322,6 @@ export default function ItemForm() {
 
   const [dateType, setDateType] = useState<string>();
 
-  const handleRangeUpdate = (v?: string) => {
-    if (v) {
-      setValue("properties.datetime", null); // Ensure single datetime is cleared when range is used
-      return `${v}T00:00:00Z`; // Ensure the time portion is included
-    }
-    return undefined; // Return undefined if no value is provided
-  };
-
-  const handleSingleDateUpdate = (v?: string) => {
-    if (v) {
-      setValue("properties.start_datetime", undefined);
-      setValue("properties.end_datetime", undefined);
-      return `${v}T00:00:00Z`; // Ensure the time portion is included
-    }
-    return null; // Clear the datetime value if input is empty
-  };
-
-  // Ensure collection selection is reflected in JSON output
   useEffect(() => {
     if (isNewItem) {
       setValue("collection", selectedCollectionId);
@@ -357,8 +332,18 @@ export default function ItemForm() {
     return <Loading>Loading item...</Loading>;
   }
 
+  const handleFormSubmit = async (data: FormValues) => {
+    const resultMessage = await onSubmit(data);
+    setMessage(resultMessage); // Set the message
+  };
+
   return (
     <>
+      {message && (
+        <Box mb="4" p="4" bg="green.100" borderRadius="md">
+          <Text>{message}</Text>
+        </Box>
+      )}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Text as="h1">
           <HeadingLead>
@@ -383,7 +368,7 @@ export default function ItemForm() {
           {jsonError && <Text color="red.500">{jsonError}</Text>}
           <Box mt="4">
             <Button
-              onClick={handleSubmit(() => onSubmit(JSON.parse(jsonInput)))}
+              onClick={handleSubmit(() => handleFormSubmit(JSON.parse(jsonInput)))}
               isLoading={updateState === "LOADING"}
             >
               Create Item
@@ -391,7 +376,7 @@ export default function ItemForm() {
           </Box>
         </Box>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
           <Text as="h2">Common Meta Data</Text>
           <TextInput
             label="Title"
@@ -555,17 +540,10 @@ export default function ItemForm() {
               />
 
               {/* Custom BBoxInput */}
-              <BBoxInput
-                register={register}
-                errors={errors}
-              />
+              <BBoxInput register={register} errors={errors} />
 
               {/* Custom AssetsInput */}
-              <AssetsInput
-                control={control}
-                register={register}
-                errors={errors}
-              />
+              <AssetsInput control={control} register={register} errors={errors} />
 
               <fieldset>
                 <legend>Geometry</legend>
