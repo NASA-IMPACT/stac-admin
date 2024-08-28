@@ -39,5 +39,7 @@ export type FormValues = {
     datetime: string | null;
     start_datetime?: string;
     end_datetime?: string;
+    created?: string;
+    updated?: string; 
   }
 }
