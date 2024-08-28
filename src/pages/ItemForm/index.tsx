@@ -26,6 +26,8 @@ import { Loading, HeadingLead } from "../../components";
 import useUpdateItem from "./useUpdateItem";
 import Api from "../../api";
 import { usePageTitle } from "../../hooks";
+import { StacCollection } from "stac-ts";
+
 import {
   TextInput,
   TextAreaInput,
@@ -543,7 +545,7 @@ export default function ItemForm() {
                   onChange={(e) => setSelectedCollectionId(e.target.value)}
                   isRequired
                 >
-                  {collections?.collections.map((col) => (
+                  {collections?.collections.map((col: StacCollection) => (
                     <option key={col.id} value={col.id}>
                       {col.id}
                     </option>
