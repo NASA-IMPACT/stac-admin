@@ -38,7 +38,7 @@ import {
 } from "../../components/forms";
 
 // Assume that these default values are predefined for new items
-const defaultValues = {
+const defaultValues: FormValues= {
   id: "",
   type: "Feature",
   stac_version: "1.0.0",
@@ -211,7 +211,8 @@ export default function ItemForm() {
     ? null
     : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
 
-  const { item, state, reload } = useItem(itemResource, { skip: isNewItem });
+  // const { item, state, reload } = useItem(itemResource, { skip: isNewItem });
+  const { item, state, reload } = useItem(itemResource);
   const { update, state: updateState } = useUpdateItem(itemResource);
   const { collections } = useCollections();
 
