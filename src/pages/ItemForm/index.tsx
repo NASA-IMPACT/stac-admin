@@ -75,130 +75,30 @@ const defaultValues: FormValues= {
   },
   bbox: [0, 0, 10, 10], // Example bbox initialization
   properties: {
-    title: "testing",
-    description: "string",
+    title: "",
+    description: "",
     datetime: "2024-08-26T22:12:31.927Z",
     created: "2024-08-26T22:12:31.927Z",
     updated: "2024-08-26T22:12:31.927Z",
     start_datetime: "2024-08-26T22:12:31.927Z",
     end_datetime: "2024-08-26T22:12:31.927Z",
-    license: "string",
+    license: "",
     providers: [
       {
-        name: "string",
-        description: "string",
-        roles: ["producer"],
-        url: "string",
+        name: "",
+        description: "",
+        roles: [],
+        url: "",
       },
     ],
-    platform: "string",
-    constellation: "string",
-    mission: "string",
+    platform: "",
+    constellation: "",
+    mission: "",
     gsd: 1,
-    instruments: ["string"],
+    instruments: [],
   },
 };
 
-interface BBoxInputProps {
-  register: any;
-  errors: any;
-}
-
-interface AssetsInputProps {
-  control: any;
-  register: any;
-  errors: any;
-}
-
-// Custom input for bbox (array of numbers)
-const BBoxInput: React.FC<BBoxInputProps> = ({ register, errors }) => (
-  <fieldset>
-    <legend>Bounding Box</legend>
-    <Box display="flex" gap="2">
-      <Input
-        placeholder="minX"
-        type="number"
-        {...register("bbox[0]", { valueAsNumber: true })}
-      />
-      <Input
-        placeholder="minY"
-        type="number"
-        {...register("bbox[1]", { valueAsNumber: true })}
-      />
-      <Input
-        placeholder="maxX"
-        type="number"
-        {...register("bbox[2]", { valueAsNumber: true })}
-      />
-      <Input
-        placeholder="maxY"
-        type="number"
-        {...register("bbox[3]", { valueAsNumber: true })}
-      />
-    </Box>
-    {errors?.bbox && <p>{errors.bbox.message}</p>}
-  </fieldset>
-);
-
-// Custom input for assets (object with dynamic keys)
-const AssetsInput: React.FC<AssetsInputProps> = ({ control, register, errors }) => {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "assets",
-  });
-
-  return (
-    <fieldset>
-      <legend>Assets</legend>
-      <Table variant="simple" size="sm">
-        <Thead>
-          <Tr>
-            <Th>Key</Th>
-            <Th>Value</Th>
-            <Th aria-label="Actions" />
-          </Tr>
-        </Thead>
-        <Tbody>
-          {fields.map((item, index) => (
-            <Tr key={item.id}>
-              <Td>
-                <Input
-                  placeholder="Asset Key"
-                  {...register(`assets.${index}.key`)}
-                />
-              </Td>
-              <Td>
-                <Input
-                  placeholder="Asset Value"
-                  {...register(`assets.${index}.value`)}
-                />
-              </Td>
-              <Td>
-                <IconButton
-                  size="sm"
-                  icon={<MdDelete />}
-                  onClick={() => remove(index)}
-                  aria-label="Remove asset"
-                />
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-      <Box textAlign="right" mt="2">
-        <Button
-          type="button"
-          variant="link"
-          leftIcon={<MdAdd />}
-          onClick={() => append({ key: "", value: "" })}
-        >
-          Add Asset
-        </Button>
-      </Box>
-      {errors?.assets && <p>{errors.assets.message}</p>}
-    </fieldset>
-  );
-};
 
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
@@ -211,7 +111,6 @@ export default function ItemForm() {
     ? null
     : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
 
-  // const { item, state, reload } = useItem(itemResource, { skip: isNewItem });
   const { item, state, reload } = useItem(itemResource);
   const { update, state: updateState } = useUpdateItem(itemResource);
   const { collections } = useCollections();
@@ -223,7 +122,7 @@ export default function ItemForm() {
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
-  const [message, setMessage] = useState<string | null>(null); // Add state for the message
+  const [message, setMessage] = useState<string | null>(null);
 
   const {
     control,
@@ -252,7 +151,6 @@ export default function ItemForm() {
   }, [watchedValues, isJsonMode]);
 
   const onSubmit = async (data: FormValues) => {
-    // Ensure the datetime fields have timezone information
     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
       data.properties.datetime += "Z";
     }
@@ -559,21 +457,6 @@ export default function ItemForm() {
                 error={errors.stac_version}
                 {...register("stac_version")}
               />
-
-              {/* Custom BBoxInput */}
-              <BBoxInput register={register} errors={errors} />
-
-              {/* Custom AssetsInput */}
-              <AssetsInput control={control} register={register} errors={errors} />
-
-              <fieldset>
-                <legend>Geometry</legend>
-                <TextAreaInput
-                  label="Geometry (GeoJSON)"
-                  error={errors.geometry}
-                  {...register("geometry")}
-                />
-              </fieldset>
             </>
           )}
 

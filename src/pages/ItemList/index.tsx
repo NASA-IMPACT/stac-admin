@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Heading, Box, Icon, IconButton } from "@chakra-ui/react";
+import { Heading, Box, Icon, IconButton, Text } from "@chakra-ui/react";
 import { useStacSearch } from "@developmentseed/stac-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { usePageTitle } from "../../hooks";
@@ -32,8 +32,8 @@ function ItemList() {
 
   return (
     <>
-      <Box display="flex" alignItems="baseline" gap="4">
-        <Heading as="h1" flex="1">Items</Heading>
+      <Box display="flex" alignItems="center">
+        <Text as="h1" mr={4}>Items</Text>
         <Link 
           to="/items/new_item/"
           aria-label="Add Item"
