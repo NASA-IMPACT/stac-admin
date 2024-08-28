@@ -322,6 +322,23 @@ export default function ItemForm() {
 
   const [dateType, setDateType] = useState<string>();
 
+  const handleRangeUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.datetime", null); 
+      return `${v}T00:00:00Z`;
+    }
+    return undefined; 
+  };
+
+  const handleSingleDateUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.start_datetime", undefined);
+      setValue("properties.end_datetime", undefined);
+      return `${v}T00:00:00Z`; 
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (isNewItem) {
       setValue("collection", selectedCollectionId);
