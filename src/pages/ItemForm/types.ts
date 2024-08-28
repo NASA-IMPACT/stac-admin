@@ -35,7 +35,7 @@ export type FormValues = {
     constellation: string;
     mission: string;
     gsd: number;
-    instrument: string[];
+    instruments: string[];
     datetime: string | null;
     start_datetime?: string;
     end_datetime?: string;

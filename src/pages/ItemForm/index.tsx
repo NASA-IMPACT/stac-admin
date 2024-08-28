@@ -271,6 +271,7 @@ export default function ItemForm() {
           body: JSON.stringify(data),
         });
         message = "Successfully created the new item.";
+        reload();
       } else {
         await update(data);
         message = "Successfully updated the item.";
