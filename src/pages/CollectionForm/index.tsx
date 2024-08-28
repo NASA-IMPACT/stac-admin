@@ -23,7 +23,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
-import { fetchLicenses, License } from "../../services/licenseService";
+import { fetchLicenses, License } from "../../constants/constant";
 import useUpdateCollection from "./useUpdateCollection";
 
 import { HeadingLead } from "../../components/HeadingLead";

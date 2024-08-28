@@ -5,7 +5,7 @@ import { LoadingState, ApiError } from "../../types";
 import { defaultData } from "./constants/updateDataDefaultValue";
 
 type UseUpdateCollectionType = {
-  update: (data: StacCollection, isEditMode: boolean) => Promise<string>;
+  update: (data: StacCollection, isEditMode: boolean) => Promise<StacCollection>;
   error?: ApiError;
   state: LoadingState;
 }

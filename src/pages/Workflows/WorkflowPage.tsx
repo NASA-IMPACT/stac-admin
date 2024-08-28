@@ -34,7 +34,7 @@ import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useForm, useFieldArray } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
 import { WorkflowFormValues } from "./types";
-import { fetchLicenses, License } from "../../services/licenseService";
+import { fetchLicenses, License } from "../../constants/constant";
 
 const WorkflowPage: React.FC = () => {
   const { handleSubmit, control, register, formState: { errors }, setValue, watch } = useForm<WorkflowFormValues>({
