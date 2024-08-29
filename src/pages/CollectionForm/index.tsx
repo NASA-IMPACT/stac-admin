@@ -24,6 +24,8 @@ import { MdAdd, MdDelete } from "react-icons/md";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
+
+import { FormValues } from "./types";
 import useUpdateCollection from "./useUpdateCollection";
 
 import { HeadingLead } from "../../components/HeadingLead";
@@ -34,11 +36,13 @@ import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
 import { defaultData } from "./constants/updateDataDefaultValue";
 
+
 function CollectionForm() {
   const { collectionId } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!collectionId;
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
+
 
   const { collection, state, reload } = useCollection(collectionId!);
   const { update, error, state: updateState } = useUpdateCollection();
@@ -49,11 +53,14 @@ function CollectionForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
     defaultValues: isEditMode ? collection : defaultData,
   });
 
+
   const { fields, append, remove } = useFieldArray({ control, name: "providers" });
+
 
   const watchedValues = watch();
 
@@ -68,6 +75,8 @@ function CollectionForm() {
     };
     loadLicenses();
   }, []);
+
+  // Synchronize the form values with the JSON input
 
   useEffect(() => {
     if (!isJsonMode) {
@@ -90,9 +99,11 @@ function CollectionForm() {
     }
   };
 
+
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
     setJsonInput(newJson);
+
 
     try {
       const parsedData = JSON.parse(newJson);
@@ -105,6 +116,7 @@ function CollectionForm() {
     }
   };
 
+
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
@@ -112,17 +124,19 @@ function CollectionForm() {
     }
   };
 
+  if (!collection && isEditMode && state === "LOADING") {
+    return <Loading>Loading collection...</Loading>;
+  }
+
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Text as="h1">
-          <HeadingLead>{isEditMode ? "Edit Collection" : "Add New Collection"}</HeadingLead> {isEditMode && collection.id}
+          <HeadingLead>{isEditMode ? "Edit Collection" : "Add New Collection"}</HeadingLead> {isEditMode && collection?.id}
         </Text>
-        {!isEditMode && (
-          <Button type="button" onClick={toggleJsonMode}>
-            {isJsonMode ? "Form" : "JSON"}
-          </Button>
-        )}
+        <Button type="button" onClick={toggleJsonMode}>
+          {isJsonMode ? "Form" : "JSON"}
+        </Button>
       </Box>
 
       {successMessage && (
@@ -205,6 +219,7 @@ function CollectionForm() {
             {errors.license && <Text color="red.500">{errors.license.message}</Text>}
           </Box>
 
+
           <Controller
             name="keywords"
             render={({ field }) => (
@@ -218,8 +233,10 @@ function CollectionForm() {
             control={control}
           />
 
+
           <fieldset>
             <legend>Providers</legend>
+
 
             <Table variant="simple" size="sm">
               <Thead>
@@ -294,6 +311,7 @@ function CollectionForm() {
               </Button>
             </Box>
           </fieldset>
+
 
           <Box mt="4">
             <Button type="submit" isLoading={updateState === "LOADING"}>
