@@ -32,6 +32,7 @@ import useUpdateItem from "./useUpdateItem";
 import Api from "../../api";
 import { usePageTitle } from "../../hooks";
 import { StacCollection } from "stac-ts";
+import { fetchLicenses, License } from "../../services/licenseService";
 
 import {
   TextInput,
@@ -125,6 +126,7 @@ export default function ItemForm() {
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
+  const [licenses, setLicenses] = useState<License[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -146,6 +148,19 @@ export default function ItemForm() {
   });
 
   const watchedValues = watch();
+
+  useEffect(() => {
+    const loadLicenses = async () => {
+      try {
+        const fetchedLicenses = await fetchLicenses();
+        setLicenses(fetchedLicenses);
+      } catch (error) {
+        setErrorMessage("Failed to load licenses. Please try again later.");
+      }
+    };
+    loadLicenses();
+  }, []);
+
 
   useEffect(() => {
     if (!isJsonMode) {
@@ -345,11 +360,28 @@ export default function ItemForm() {
             error={errors.properties?.description}
             {...register("properties.description")}
           />
-          <TextInput
-            label="License"
-            error={errors.properties?.license}
-            {...register("properties.license")}
-          />
+          
+          {/* License dropdown */}
+          <Box>
+            <label htmlFor="license">License</label>
+            <Controller
+              name="license"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <Select {...field} id="license" overflowY="auto">
+                  <option value="" disabled>Select a license</option>
+                  {licenses.map((license) => (
+                    <option key={license.licenseId} value={license.licenseId}>
+                      {license.licenseId} - {license.name}
+                    </option>
+                  ))}
+                  <option value="other">Other</option>
+                </Select>
+              )}
+            />
+            {errors.license && <Text color="red.500">{errors.license.message}</Text>}
+          </Box>
 
           <fieldset>
             <legend>Date</legend>
