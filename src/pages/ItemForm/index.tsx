@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link as RouterLink  } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
@@ -179,10 +179,10 @@ export default function ItemForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        message = "Successfully created the new item.";
+        message = `Successfully created the new item in collection ${selectedCollectionId}.`;
       } else {
         await update(data);
-        message = "Successfully updated the item.";
+        message = `Successfully updated the item ${itemId}.`;
       }
       setSuccessMessage(message);
       reload();
@@ -263,7 +263,29 @@ export default function ItemForm() {
           <AlertIcon />
           <Box flex="1">
             <AlertTitle>Success!</AlertTitle>
-            <AlertDescription>{successMessage}</AlertDescription>
+            <AlertDescription>
+              {isNewItem ? (
+                <>
+                  {successMessage}{" "}
+                  <RouterLink to={`/collections/${selectedCollectionId}/`}>View Item</RouterLink>
+                  <Box mt="2">
+                    <Button
+                      variant="link"
+                      onClick={() => window.location.reload()}
+                    >
+                      Create another item
+                    </Button>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  {successMessage}{" "}
+                  <RouterLink to={`/collections/${collectionId}`}>
+                    View updated item
+                  </RouterLink>
+                </>
+              )}
+            </AlertDescription>
           </Box>
           <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
         </Alert>
