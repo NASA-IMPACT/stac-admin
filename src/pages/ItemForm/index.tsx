@@ -154,8 +154,8 @@ export default function ItemForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+
   const onSubmit = async (data: FormValues) => {
-    // Clear previous messages
     setSuccessMessage("");
     setErrorMessage("");
 
