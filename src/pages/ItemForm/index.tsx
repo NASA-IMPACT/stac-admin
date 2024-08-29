@@ -19,6 +19,11 @@ import {
   Stack,
   Radio,
   Select,
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  CloseButton,
+  AlertIcon
 } from "@chakra-ui/react";
 import { MdDelete, MdAdd } from "react-icons/md";
 import { FormValues } from "./types";
@@ -120,8 +125,8 @@ export default function ItemForm() {
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  const [isErrorMessage, setIsErrorMessage] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
     control,
@@ -150,6 +155,10 @@ export default function ItemForm() {
   }, [watchedValues, isJsonMode]);
 
   const onSubmit = async (data: FormValues) => {
+    // Clear previous messages
+    setSuccessMessage("");
+    setErrorMessage("");
+
     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
       data.properties.datetime += "Z";
     }
@@ -162,7 +171,6 @@ export default function ItemForm() {
 
     try {
       let message;
-      setIsErrorMessage(false);
       if (isNewItem) {
         const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
 
@@ -172,17 +180,14 @@ export default function ItemForm() {
           body: JSON.stringify(data),
         });
         message = "Successfully created the new item.";
-        reload();
       } else {
         await update(data);
         message = "Successfully updated the item.";
-        reload();
       }
-      return message;
-    } catch (error) {
-      console.error("Error submitting data:", error);
-      setIsErrorMessage(true);
-      return "Failed to submit the item.";
+      setSuccessMessage(message);
+      reload();
+    } catch (error: any) {
+      setErrorMessage(error.message || "An error occurred while saving the item.");
     }
   };
 
@@ -251,18 +256,30 @@ export default function ItemForm() {
     return <Loading>Loading item...</Loading>;
   }
 
-  const handleFormSubmit = async (data: FormValues) => {
-    const resultMessage = await onSubmit(data);
-    setMessage(resultMessage);
-  };
-
   return (
     <>
-      {message && (
-        <Box mb="4" p="4" bg={isErrorMessage ? "red.100" : "green.100"} borderRadius="md">
-          <Text color={isErrorMessage ? "red.500" : "green.500"}>{message}</Text>
-        </Box>
+      {successMessage && (
+        <Alert status="success" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
+        </Alert>
       )}
+
+      {errorMessage && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          <Box flex="1">
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Box>
+          <CloseButton position="absolute" right="8px" top="8px" onClick={() => setErrorMessage("")} />
+        </Alert>
+      )}
+
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Text as="h1">
           <HeadingLead>
@@ -273,6 +290,7 @@ export default function ItemForm() {
           {isJsonMode ? "Form" : "JSON"}
         </Button>
       </Box>
+
       {isJsonMode ? (
         <Box>
           <Textarea
@@ -285,7 +303,7 @@ export default function ItemForm() {
           {jsonError && <Text color="red.500">{jsonError}</Text>}
           <Box mt="4">
             <Button
-              onClick={handleSubmit(() => handleFormSubmit(JSON.parse(jsonInput)))}
+              onClick={handleSubmit(() => onSubmit(JSON.parse(jsonInput)))}
               isLoading={updateState === "LOADING"}
             >
               {isNewItem ? "Create Item" : "Save Item"}
@@ -293,7 +311,7 @@ export default function ItemForm() {
           </Box>
         </Box>
       ) : (
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Text as="h2">Common Meta Data</Text>
           <TextInput
             label="Title"
