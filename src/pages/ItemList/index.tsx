@@ -9,7 +9,7 @@ import { MdAdd } from "react-icons/md";
 
 function ItemList() {
   usePageTitle("Items");
-  const { collectionId } = useParams();  // Get the collectionId from the URL params
+  // const { collectionId } = useParams();  // Get the collectionId from the URL params
   const {
     results,
     state,
