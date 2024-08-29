@@ -6,6 +6,7 @@ import { MdAdd, MdDelete } from "react-icons/md";
 import { StacCollection } from "stac-ts";
 import { useCollection } from "@developmentseed/stac-react";
 
+
 import { FormValues } from "./types";
 import useUpdateCollection from "./useUpdateCollection";
 import { HeadingLead, Loading } from "../../components";
@@ -13,11 +14,13 @@ import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../compo
 import { usePageTitle } from "../../hooks";
 import { defaultData } from "./constants/updateDataDefaultValue";
 
+
 function CollectionForm() {
   const { collectionId } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!collectionId;
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
+
 
   const { collection, state, reload } = useCollection(collectionId!);
   const { update, state: updateState } = useUpdateCollection();
@@ -25,13 +28,17 @@ function CollectionForm() {
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
 
+
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
     defaultValues: isEditMode ? collection : defaultData,
   });
 
+
   const { fields, append, remove } = useFieldArray({ control, name: "providers" });
 
+
   const watchedValues = watch();
+
 
   // Synchronize the form values with the JSON input
   useEffect(() => {
@@ -41,13 +48,16 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+
   const onSubmit = (data: StacCollection) => {
     update(data, isEditMode).then(reload);
   };
 
+
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
     setJsonInput(newJson);
+
 
     try {
       const parsedData = JSON.parse(newJson);
@@ -60,29 +70,29 @@ function CollectionForm() {
     }
   };
 
+
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
-      // Switching to JSON mode, ensure the JSON input is updated with the latest form values
       setJsonInput(JSON.stringify({ ...defaultData, ...watchedValues }, null, 2));
     }
   };
+
 
   if (!collection && isEditMode && state === "LOADING") {
     return <Loading>Loading collection...</Loading>;
   }
 
+
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Text as="h1">
-          <HeadingLead>{isEditMode ? "Edit Collection" : "Add New Collection"}</HeadingLead> {isEditMode && collection.id}
+          <HeadingLead>{isEditMode ? "Edit Collection" : "Add New Collection"}</HeadingLead> {isEditMode && collection?.id}
         </Text>
-        {!isEditMode && (
-          <Button type="button" onClick={toggleJsonMode}>
-            {isJsonMode ? "Form" : "JSON"}
-          </Button>
-        )}
+        <Button type="button" onClick={toggleJsonMode}>
+          {isJsonMode ? "Form" : "JSON"}
+        </Button>
       </Box>
       {isJsonMode ? (
         <Box>
@@ -125,6 +135,7 @@ function CollectionForm() {
             {...register("license")}
           />
 
+
           <Controller
             name="keywords"
             render={({ field }) => (
@@ -138,8 +149,10 @@ function CollectionForm() {
             control={control}
           />
 
+
           <fieldset>
             <legend>Providers</legend>
+
 
             <Table variant="simple" size="sm">
               <Thead>
@@ -214,6 +227,7 @@ function CollectionForm() {
               </Button>
             </Box>
           </fieldset>
+
 
           <Box mt="4">
             <Button type="submit" isLoading={updateState === "LOADING"}>

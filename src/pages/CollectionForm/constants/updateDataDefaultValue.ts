@@ -13,6 +13,15 @@ export const defaultData = {
     }
   },
   license: "",
+  keywords: [],
+  providers: "",
+  assets: {
+    thumbnail: {
+      href: "https://example.com/thumbnail.png",
+      title: "Thumbnail",
+      type: "image/png",
+    }
+  },
   stac_extension: [],
   stac_version: "1.0.0",
 };
