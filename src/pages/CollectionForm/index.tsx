@@ -25,7 +25,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
 
-import { FormValues } from "./types";
 import useUpdateCollection from "./useUpdateCollection";
 
 import { HeadingLead } from "../../components/HeadingLead";
@@ -123,11 +122,7 @@ function CollectionForm() {
       setJsonInput(JSON.stringify({ ...defaultData, ...watchedValues }, null, 2));
     }
   };
-
-  if (!collection && isEditMode && state === "LOADING") {
-    return <Loading>Loading collection...</Loading>;
-  }
-
+  
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
