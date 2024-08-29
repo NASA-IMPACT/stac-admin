@@ -37,8 +37,7 @@ import {
   DateTimeInput,
 } from "../../components/forms";
 
-// Assume that these default values are predefined for new items
-const defaultValues: FormValues= {
+const defaultValues: FormValues = {
   id: "",
   type: "Feature",
   stac_version: "1.0.0",
@@ -73,7 +72,7 @@ const defaultValues: FormValues= {
       ],
     ],
   },
-  bbox: [0, 0, 10, 10], // Example bbox initialization
+  bbox: [0, 0, 10, 10],
   properties: {
     title: "",
     description: "",
@@ -99,7 +98,6 @@ const defaultValues: FormValues= {
   },
 };
 
-
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
   const navigate = useNavigate();
@@ -123,6 +121,7 @@ export default function ItemForm() {
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [isErrorMessage, setIsErrorMessage] = useState<boolean>(false);
 
   const {
     control,
@@ -160,12 +159,13 @@ export default function ItemForm() {
     if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
       data.properties.end_datetime += "Z";
     }
-    
+
     try {
       let message;
+      setIsErrorMessage(false);
       if (isNewItem) {
         const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
-  
+
         await Api.fetch(postUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -181,10 +181,10 @@ export default function ItemForm() {
       return message;
     } catch (error) {
       console.error("Error submitting data:", error);
+      setIsErrorMessage(true);
       return "Failed to submit the item.";
     }
   };
-  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
@@ -226,17 +226,17 @@ export default function ItemForm() {
 
   const handleRangeUpdate = (v?: string) => {
     if (v) {
-      setValue("properties.datetime", null); 
+      setValue("properties.datetime", null);
       return `${v}T00:00:00Z`;
     }
-    return undefined; 
+    return undefined;
   };
 
   const handleSingleDateUpdate = (v?: string) => {
     if (v) {
       setValue("properties.start_datetime", undefined);
       setValue("properties.end_datetime", undefined);
-      return `${v}T00:00:00Z`; 
+      return `${v}T00:00:00Z`;
     }
     return null;
   };
@@ -253,14 +253,14 @@ export default function ItemForm() {
 
   const handleFormSubmit = async (data: FormValues) => {
     const resultMessage = await onSubmit(data);
-    setMessage(resultMessage); // Set the message
+    setMessage(resultMessage);
   };
 
   return (
     <>
       {message && (
-        <Box mb="4" p="4" bg="green.100" borderRadius="md">
-          <Text>{message}</Text>
+        <Box mb="4" p="4" bg={isErrorMessage ? "red.100" : "green.100"} borderRadius="md">
+          <Text color={isErrorMessage ? "red.500" : "green.500"}>{message}</Text>
         </Box>
       )}
       <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -269,13 +269,11 @@ export default function ItemForm() {
             {isNewItem ? "Add New Item" : `Edit Item ${item?.id}`}
           </HeadingLead>
         </Text>
-        {isNewItem && (
-          <Button type="button" onClick={toggleJsonMode}>
-            {isJsonMode ? "Form" : "JSON"}
-          </Button>
-        )}
+        <Button type="button" onClick={toggleJsonMode}>
+          {isJsonMode ? "Form" : "JSON"}
+        </Button>
       </Box>
-      {isNewItem && isJsonMode ? (
+      {isJsonMode ? (
         <Box>
           <Textarea
             value={jsonInput}
@@ -290,7 +288,7 @@ export default function ItemForm() {
               onClick={handleSubmit(() => handleFormSubmit(JSON.parse(jsonInput)))}
               isLoading={updateState === "LOADING"}
             >
-              Create Item
+              {isNewItem ? "Create Item" : "Save Item"}
             </Button>
           </Box>
         </Box>
