@@ -127,8 +127,9 @@ export default function ItemForm() {
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | JSX.Element | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   const {
     control,
@@ -183,7 +184,7 @@ export default function ItemForm() {
     if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
       data.properties.end_datetime += "Z";
     }
-
+    const itemId = data.id;
     try {
       let message;
       if (isNewItem) {
@@ -202,7 +203,44 @@ export default function ItemForm() {
       setSuccessMessage(message);
       reload();
     } catch (error: any) {
-      setErrorMessage(error.message || "An error occurred while saving the item.");
+      let errorMessage = "An unexpected error occurred.";
+      if (error.detail) {
+        const errorDetails = error.detail;
+        const action = isNewItem ? "creating" : "editing";
+
+        if (errorDetails.code && errorDetails.description) {
+          errorMessage = (
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
+              <Text fontWeight="bold">Description: Validation failed for item with ID {itemId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.description) ? (
+                  errorDetails.description.map((desc, index) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>
+                      {desc.msg}
+                    </Text>
+                  ))
+                ) : (
+                  <Text whiteSpace="pre-wrap">{errorDetails.description}</Text>
+                )}
+              </Box>
+            </Box>
+          );
+        } else if (errorDetails.detail) {
+          errorMessage = (
+            <Box>
+              <Text fontWeight="bold">
+                Validation failed for item with ID {itemId || "Unknown"} while {action} it.
+              </Text>
+              <Text>{errorDetails.detail}</Text>
+            </Box>
+          );
+          // errorMessage = `${errorDetails.detail}`;
+        } else {
+          errorMessage = JSON.stringify(errorDetails, null, 2);
+        }
+      }
+      setErrorMessage(errorMessage);
     }
   };
 
