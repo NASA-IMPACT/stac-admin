@@ -80,20 +80,75 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  // const onSubmit = async (data: StacCollection) => {
+  //   // Clear previous messages
+  //   setSuccessMessage("");
+  //   setErrorMessage("");
+
+  //   try {
+  //     const message = await update(data, isEditMode);
+  //     setSuccessMessage(message);
+  //     setNewCollectionId(data.id); // Store the new collection ID
+  //     reload();
+  //   } catch (error: any) {
+  //     setErrorMessage(error.message || "An error occurred while saving the collection.");
+  //   }
+  // };
+
   const onSubmit = async (data: StacCollection) => {
     // Clear previous messages
     setSuccessMessage("");
     setErrorMessage("");
-
+  
+    const collectionId = data.id;
+  
     try {
       const message = await update(data, isEditMode);
       setSuccessMessage(message);
-      setNewCollectionId(data.id); // Store the new collection ID
+      setNewCollectionId(collectionId); // Store the new collection ID
       reload();
     } catch (error: any) {
-      setErrorMessage(error.message || "An error occurred while saving the collection.");
+      let errorMessage = "An unexpected error occurred.";
+      const action = isEditMode ? "editing" : "creating";
+  
+      if (error.detail) {
+        const errorDetails = error.detail;
+  
+        if (errorDetails.code && errorDetails.description) {
+          errorMessage = (
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
+              <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.description) ? (
+                  errorDetails.description.map((desc, index) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>
+                      {desc.msg}
+                    </Text>
+                  ))
+                ) : (
+                  <Text>{errorDetails.description}</Text>
+                )}
+              </Box>
+            </Box>
+          );
+        } else if (errorDetails.detail) {
+          errorMessage = (
+            <Box>
+              <Text fontWeight="bold">
+                Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.
+              </Text>
+              <Text>{errorDetails.detail}</Text>
+            </Box>
+          );
+        } else {
+          errorMessage = JSON.stringify(errorDetails, null, 2);
+        }
+      }
+      setErrorMessage(errorMessage);
     }
-  };
+  };  
+  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
