@@ -86,11 +86,12 @@ function CollectionForm() {
     const collectionId = data.id;
   
     try {
-      const message = await update(data, isEditMode);
-      setSuccessMessage(String(message));
-      setNewCollectionId(collectionId); // Store the new collection ID
+      const updatedCollection = await update(data, isEditMode);
+      setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
+      setNewCollectionId(collectionId);
       reload();
     } catch (error: any) {
+      console.log("Error occurred:", error);
       const action = isEditMode ? "editing" : "creating";
   
       if (error.detail) {
@@ -128,7 +129,8 @@ function CollectionForm() {
         }
       }
     }
-  };  
+  };
+    
   
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

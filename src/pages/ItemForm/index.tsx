@@ -112,7 +112,7 @@ export default function ItemForm() {
   usePageTitle(isNewItem ? "Add New Item" : `Edit item ${itemId}`);
 
   const itemResource = isNewItem
-    ? null
+    ? ""
     : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
 
   const { item, state, reload } = useItem(itemResource);
@@ -138,7 +138,7 @@ export default function ItemForm() {
     setValue,
     watch,
   } = useForm<FormValues>({
-    defaultValues: isNewItem ? defaultValues : undefined,
+    defaultValues: isNewItem ? defaultValues : (item as FormValues),
     values: !isNewItem ? item : undefined,
   });
 
@@ -399,11 +399,11 @@ export default function ItemForm() {
           <Box>
             <label htmlFor="license">License</label>
             <Controller
-              name="license"
+              name="properties.license"
               control={control}
               defaultValue=""
               render={({ field }) => (
-                <Select {...field} id="license" overflowY="auto">
+                <Select {...field} id="license" overflowY="auto" value={field.value as string | undefined}>
                   <option value="" disabled>Select a license</option>
                   {licenses.map((license) => (
                     <option key={license.licenseId} value={license.licenseId}>
@@ -414,7 +414,7 @@ export default function ItemForm() {
                 </Select>
               )}
             />
-            {errors.license && <Text color="red.500">{errors.license.message}</Text>}
+            {errors.properties?.license && <Text color="red.500">{errors.properties.license.message}</Text>}
           </Box>
 
           <fieldset>

@@ -44,9 +44,9 @@ function useUpdateCollection(): UseUpdateCollectionType {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
-
+      const updatedCollection: StacCollection = await result;
       setState("IDLE");
-      return `Successfully ${isEditMode ? "updated" : "created"} the collection.`;
+      return updatedCollection;
     } catch (e: any) {
       setError(e);
       setState("IDLE");
