@@ -139,9 +139,9 @@ export default function ItemForm() {
     watch,
   } = useForm<FormValues>({
     defaultValues: isNewItem ? defaultValues : (item as FormValues),
-    values: !isNewItem ? item : undefined,
+    values: !isNewItem ? (item as FormValues) : undefined,
   });
-
+ 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "properties.providers",

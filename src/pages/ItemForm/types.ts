@@ -14,7 +14,14 @@ export type FormValues = {
   stac_version: StacVersion;
   stac_extensions?: StacExtensions;
   collection?: string;
-  links: StacLink[];
+  // links: StacLink[];
+  links: Array<{
+    href?: string;
+    rel?: string;
+    type?: string;
+    title?: string;
+    [key: string]: any; // This allows additional properties
+  }>;
   assets: { [k: string]: StacAsset };
   geometry:
   | null
