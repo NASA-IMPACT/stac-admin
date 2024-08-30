@@ -121,7 +121,7 @@ const WorkflowPage: React.FC = () => {
   const onSubmit = async (data: WorkflowFormValues) => {
     console.log("Workflow executed with data:", data);
     try {
-      const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      const response = await fetch(`${process.env.REACT_APP_WORKFLOWS_API}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
