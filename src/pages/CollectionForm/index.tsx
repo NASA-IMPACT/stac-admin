@@ -80,26 +80,9 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
-  // const onSubmit = async (data: StacCollection) => {
-  //   // Clear previous messages
-  //   setSuccessMessage("");
-  //   setErrorMessage("");
-
-  //   try {
-  //     const message = await update(data, isEditMode);
-  //     setSuccessMessage(message);
-  //     setNewCollectionId(data.id); // Store the new collection ID
-  //     reload();
-  //   } catch (error: any) {
-  //     setErrorMessage(error.message || "An error occurred while saving the collection.");
-  //   }
-  // };
-
   const onSubmit = async (data: StacCollection) => {
-    // Clear previous messages
     setSuccessMessage("");
     setErrorMessage("");
-  
     const collectionId = data.id;
   
     try {
