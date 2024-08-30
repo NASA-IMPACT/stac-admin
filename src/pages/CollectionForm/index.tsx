@@ -48,7 +48,7 @@ function CollectionForm() {
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | JSX.Element>("");
   const [successMessage, setSuccessMessage] = useState("");
   const [newCollectionId, setNewCollectionId] = useState<string | null>(null); // New state to store the new collection ID
 
@@ -87,24 +87,23 @@ function CollectionForm() {
   
     try {
       const message = await update(data, isEditMode);
-      setSuccessMessage(message);
+      setSuccessMessage(String(message));
       setNewCollectionId(collectionId); // Store the new collection ID
       reload();
     } catch (error: any) {
-      let errorMessage = "An unexpected error occurred.";
       const action = isEditMode ? "editing" : "creating";
   
       if (error.detail) {
         const errorDetails = error.detail;
   
         if (errorDetails.code && errorDetails.description) {
-          errorMessage = (
+          setErrorMessage (
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.description) ? (
-                  errorDetails.description.map((desc, index) => (
+                  errorDetails.description.map((desc: { msg: string }) => (
                     <Text as="li" key={Math.random().toString(36).substr(2, 9)}>
                       {desc.msg}
                     </Text>
@@ -116,7 +115,7 @@ function CollectionForm() {
             </Box>
           );
         } else if (errorDetails.detail) {
-          errorMessage = (
+          setErrorMessage (
             <Box>
               <Text fontWeight="bold">
                 Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.
@@ -125,10 +124,9 @@ function CollectionForm() {
             </Box>
           );
         } else {
-          errorMessage = JSON.stringify(errorDetails, null, 2);
+          setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
       }
-      setErrorMessage(errorMessage);
     }
   };  
   
