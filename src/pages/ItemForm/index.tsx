@@ -43,67 +43,6 @@ import {
   DateTimeInput,
 } from "../../components/forms";
 
-// const defaultValues: FormValues = {
-//   id: "",
-//   type: "Feature",
-//   stac_version: "1.0.0",
-//   stac_extensions: ["https://example.com/extension"],
-//   collection: "",
-//   links: [
-//     {
-//       href: "string",
-//       rel: "string",
-//       type: "image/tiff; application=geotiff",
-//       title: "string",
-//       label: "assets",
-//       additionalProp1: {},
-//     },
-//   ],
-//   assets: {
-//     thumbnail: {
-//       href: "https://example.com/thumbnail.png",
-//       title: "Thumbnail",
-//       type: "image/png",
-//     },
-//   },
-//   geometry: {
-//     type: "Polygon",
-//     coordinates: [
-//       [
-//         [0, 0],
-//         [10, 0],
-//         [10, 10],
-//         [0, 10],
-//         [0, 0],
-//       ],
-//     ],
-//   },
-//   bbox: [0, 0, 10, 10],
-//   properties: {
-//     title: "",
-//     description: "",
-//     datetime: "2024-08-26T22:12:31.927Z",
-//     created: "2024-08-26T22:12:31.927Z",
-//     updated: "2024-08-26T22:12:31.927Z",
-//     start_datetime: "2024-08-26T22:12:31.927Z",
-//     end_datetime: "2024-08-26T22:12:31.927Z",
-//     license: "",
-//     providers: [
-//       {
-//         name: "",
-//         description: "",
-//         roles: [],
-//         url: "",
-//       },
-//     ],
-//     platform: "",
-//     constellation: "",
-//     mission: "",
-//     gsd: 1,
-//     instruments: [],
-//   },
-// };
-
 const defaultValues: FormValues = {
   id: "",
   type: "Feature",
@@ -258,7 +197,6 @@ export default function ItemForm() {
       } else {
         const coercedData = data as StacItem;
         await update(coercedData);  
-        // await update(data);
         message = `Successfully updated the item ${itemId}.`;
       }
       setSuccessMessage(String(message));
