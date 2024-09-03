@@ -31,7 +31,7 @@ import { Loading, HeadingLead } from "../../components";
 import useUpdateItem from "./useUpdateItem";
 import Api from "../../api";
 import { usePageTitle } from "../../hooks";
-import { StacCollection } from "stac-ts";
+import { StacCollection, StacItem } from "stac-ts";
 import { fetchLicenses, License } from "../../services/licenseService";
 
 import {
@@ -42,6 +42,67 @@ import {
   CheckboxField,
   DateTimeInput,
 } from "../../components/forms";
+
+// const defaultValues: FormValues = {
+//   id: "",
+//   type: "Feature",
+//   stac_version: "1.0.0",
+//   stac_extensions: ["https://example.com/extension"],
+//   collection: "",
+//   links: [
+//     {
+//       href: "string",
+//       rel: "string",
+//       type: "image/tiff; application=geotiff",
+//       title: "string",
+//       label: "assets",
+//       additionalProp1: {},
+//     },
+//   ],
+//   assets: {
+//     thumbnail: {
+//       href: "https://example.com/thumbnail.png",
+//       title: "Thumbnail",
+//       type: "image/png",
+//     },
+//   },
+//   geometry: {
+//     type: "Polygon",
+//     coordinates: [
+//       [
+//         [0, 0],
+//         [10, 0],
+//         [10, 10],
+//         [0, 10],
+//         [0, 0],
+//       ],
+//     ],
+//   },
+//   bbox: [0, 0, 10, 10],
+//   properties: {
+//     title: "",
+//     description: "",
+//     datetime: "2024-08-26T22:12:31.927Z",
+//     created: "2024-08-26T22:12:31.927Z",
+//     updated: "2024-08-26T22:12:31.927Z",
+//     start_datetime: "2024-08-26T22:12:31.927Z",
+//     end_datetime: "2024-08-26T22:12:31.927Z",
+//     license: "",
+//     providers: [
+//       {
+//         name: "",
+//         description: "",
+//         roles: [],
+//         url: "",
+//       },
+//     ],
+//     platform: "",
+//     constellation: "",
+//     mission: "",
+//     gsd: 1,
+//     instruments: [],
+//   },
+// };
 
 const defaultValues: FormValues = {
   id: "",
@@ -55,8 +116,6 @@ const defaultValues: FormValues = {
       rel: "string",
       type: "image/tiff; application=geotiff",
       title: "string",
-      label: "assets",
-      additionalProp1: {},
     },
   ],
   assets: {
@@ -82,11 +141,6 @@ const defaultValues: FormValues = {
   properties: {
     title: "",
     description: "",
-    datetime: "2024-08-26T22:12:31.927Z",
-    created: "2024-08-26T22:12:31.927Z",
-    updated: "2024-08-26T22:12:31.927Z",
-    start_datetime: "2024-08-26T22:12:31.927Z",
-    end_datetime: "2024-08-26T22:12:31.927Z",
     license: "",
     providers: [
       {
@@ -101,8 +155,14 @@ const defaultValues: FormValues = {
     mission: "",
     gsd: 1,
     instruments: [],
+    datetime: "2024-08-26T22:12:31.927Z",
+    start_datetime: "2024-08-26T22:12:31.927Z",
+    end_datetime: "2024-08-26T22:12:31.927Z",
+    created: "2024-08-26T22:12:31.927Z",
+    updated: "2024-08-26T22:12:31.927Z",
   },
 };
+
 
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
@@ -196,7 +256,9 @@ export default function ItemForm() {
         });
         message = `Successfully created the new item in collection ${selectedCollectionId}.`;
       } else {
-        await update(data);
+        const coercedData = data as StacItem;
+        await update(coercedData);  
+        // await update(data);
         message = `Successfully updated the item ${itemId}.`;
       }
       setSuccessMessage(String(message));
