@@ -1,4 +1,4 @@
-import { StacAsset, StacExtensions, StacLink, StacProvider, StacVersion } from "stac-ts";
+import { StacExtensions, StacVersion } from "stac-ts";
 
 export type FormValues = {
   id: string;
@@ -27,7 +27,6 @@ export type FormValues = {
     title: string;
     description: string;
     license: string;
-    // providers: StacProvider[];
     providers: Array<{
       name?: string;
       description?: string;

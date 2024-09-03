@@ -395,7 +395,6 @@ export default function ItemForm() {
             {...register("properties.description")}
           />
           
-          {/* License dropdown */}
           <Box>
             <label htmlFor="license">License</label>
             <Controller
