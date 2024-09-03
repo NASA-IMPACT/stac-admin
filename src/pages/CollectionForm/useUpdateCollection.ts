@@ -39,16 +39,23 @@ function useUpdateCollection(): UseUpdateCollectionType {
     const method = isEditMode ? "PUT" : "POST";
 
     try {
-      const result = await Api.fetch(url, {
+      const updatedCollection: StacCollection = await Api.fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
-      const updatedCollection: StacCollection = await result;
       setState("IDLE");
       return updatedCollection;
-    } catch (e: any) {
-      setError(e);
+    } catch (e) {  // Use `unknown` instead of `any`
+      if (e instanceof Error && "status" in e && "statusText" in e) {
+        setError(e as ApiError);  // Type assertion to `ApiError`
+      } else {
+        setError({
+          status: 500,
+          statusText: "Unknown Error",
+          detail: e instanceof Error ? e.message : "An unknown error occurred",
+        });
+      }
       setState("IDLE");
       throw e;
     }

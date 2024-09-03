@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { Heading, Box, Icon, IconButton, Text } from "@chakra-ui/react";
+import { Box, Icon, IconButton, Text } from "@chakra-ui/react";
 import { useStacSearch } from "@developmentseed/stac-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { usePageTitle } from "../../hooks";
 import ItemListFilter from "./ItemListFilter";
 import ItemResults from "../../components/ItemResults";

@@ -21,7 +21,6 @@ class Api {
         } catch (err) {
           e.detail = await clone.text();
         }
-        console.error("API Error Details:", e.detail);
         return Promise.reject(e);
       });
   }

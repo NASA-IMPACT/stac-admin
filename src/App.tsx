@@ -23,10 +23,15 @@ import WorkflowPage from "./pages/Workflows/WorkflowPage";
 
 export const App = () => {
   const workflowsEnabled = process.env.REACT_APP_WORKFLOWS === "True";
+  const apiUrl = process.env.REACT_APP_STAC_API;
+
+  if (!apiUrl) {
+    throw new Error("REACT_APP_STAC_API is not defined");
+  }
 
   return (
     <ChakraProvider theme={theme}>
-      <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}>
+      <StacApiProvider apiUrl={apiUrl}>
         <Router>
           <Container mx="auto" p="5" bgColor="white" boxShadow="md">
             <Box

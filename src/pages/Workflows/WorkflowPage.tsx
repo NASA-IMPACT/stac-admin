@@ -22,7 +22,6 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  Stack,
   Select,
   Alert,
   AlertIcon,
@@ -182,12 +181,10 @@ const WorkflowPage: React.FC = () => {
         throw new Error("Network response was not ok");
       }
 
-      const result = await response.json();
+      await response.json();
       setSuccessMessage("Workflow successfully posted.");
-      console.log("Workflow successfully posted:", result);
     } catch (error) {
       setErrorMessage("Error posting workflow. Please try again.");
-      console.error("Error posting workflow:", error);
     }
   };
 
