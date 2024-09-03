@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { useParams, useNavigate, Link as RouterLink  } from "react-router-dom";
+import { useParams, Link as RouterLink } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
@@ -42,6 +42,17 @@ import {
   CheckboxField,
   DateTimeInput,
 } from "../../components/forms";
+
+// Custom error types
+interface ApiErrorDetail {
+  code?: string;
+  description?: string | { msg: string }[];
+  detail?: string;
+}
+
+interface ApiError extends Error {
+  detail?: ApiErrorDetail;
+}
 
 const defaultValues: FormValues = {
   id: "",
@@ -102,10 +113,8 @@ const defaultValues: FormValues = {
   },
 };
 
-
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
-  const navigate = useNavigate();
   const isNewItem = !itemId;
 
   usePageTitle(isNewItem ? "Add New Item" : `Edit item ${itemId}`);
@@ -160,14 +169,12 @@ export default function ItemForm() {
     loadLicenses();
   }, []);
 
-
   useEffect(() => {
     if (!isJsonMode) {
       const updatedJson = JSON.stringify(watchedValues, null, 2);
       setJsonInput(updatedJson);
     }
   }, [watchedValues, isJsonMode]);
-
 
   const onSubmit = async (data: FormValues) => {
     setSuccessMessage("");
@@ -201,9 +208,10 @@ export default function ItemForm() {
       }
       setSuccessMessage(String(message));
       reload();
-    } catch (error: any) {
-      if (error.detail) {
-        const errorDetails = error.detail;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.detail) {
+        const errorDetails = apiError.detail;
         const action = isNewItem ? "creating" : "editing";
 
         if (errorDetails.code && errorDetails.description) {
@@ -277,23 +285,6 @@ export default function ItemForm() {
   }, [item, setValue, isNewItem]);
 
   const [dateType, setDateType] = useState<string>();
-
-  const handleRangeUpdate = (v?: string) => {
-    if (v) {
-      setValue("properties.datetime", null);
-      return `${v}T00:00:00Z`;
-    }
-    return undefined;
-  };
-
-  const handleSingleDateUpdate = (v?: string) => {
-    if (v) {
-      setValue("properties.start_datetime", undefined);
-      setValue("properties.end_datetime", undefined);
-      return `${v}T00:00:00Z`;
-    }
-    return null;
-  };
 
   useEffect(() => {
     if (isNewItem) {

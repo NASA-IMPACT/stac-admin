@@ -21,7 +21,7 @@ import {
 } from "@chakra-ui/react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
-import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
+import { useParams, Link as RouterLink } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
 
@@ -35,15 +35,23 @@ import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
 import { defaultData } from "./constants/updateDataDefaultValue";
 
+interface ApiErrorDetail {
+  code?: string;
+  description?: string | { msg: string }[];
+  detail?: string;
+}
+
+interface ApiError extends Error {
+  detail?: ApiErrorDetail;
+}
 
 function CollectionForm() {
   const { collectionId } = useParams();
-  const navigate = useNavigate();
   const isEditMode = !!collectionId;
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
 
-  const { collection, state, reload } = useCollection(collectionId!);
-  const { update, error, state: updateState } = useUpdateCollection();
+  const { collection, reload } = useCollection(collectionId || "");
+  const { update, state: updateState } = useUpdateCollection();
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
@@ -90,14 +98,14 @@ function CollectionForm() {
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
       setNewCollectionId(collectionId);
       reload();
-    } catch (error: any) {
-      console.log("Error occurred:", error);
+    } catch (error) {
       const action = isEditMode ? "editing" : "creating";
-  
-      if (error.detail) {
-        const errorDetails = error.detail;
-  
-        if (errorDetails.code && errorDetails.description) {
+
+      if (error instanceof Error) {
+        const apiError = error as ApiError;
+        const errorDetails = apiError.detail;
+
+        if (errorDetails?.code && errorDetails?.description) {
           setErrorMessage (
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
@@ -115,7 +123,7 @@ function CollectionForm() {
               </Box>
             </Box>
           );
-        } else if (errorDetails.detail) {
+        } else if (errorDetails?.detail) {
           setErrorMessage (
             <Box>
               <Text fontWeight="bold">
@@ -127,6 +135,8 @@ function CollectionForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
+      } else {
+        setErrorMessage("An unexpected error occurred.");
       }
     }
   };
