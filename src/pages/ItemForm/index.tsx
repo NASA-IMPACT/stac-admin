@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { useParams, Link as RouterLink } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
@@ -132,6 +132,7 @@ export default function ItemForm() {
   );
 
   const [isJsonMode, setJsonMode] = useState(false);
+  const [lastMode, setLastMode] = useState<"json" | "form">("form");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -144,6 +145,7 @@ export default function ItemForm() {
     handleSubmit,
     formState: { errors },
     setValue,
+    reset,
     watch,
   } = useForm<FormValues>({
     defaultValues: isNewItem ? defaultValues : (item as FormValues),
@@ -191,7 +193,6 @@ export default function ItemForm() {
     }
     const itemId = data.id;
     try {
-      let message;
       if (isNewItem) {
         const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
 
@@ -200,15 +201,14 @@ export default function ItemForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        message = `Successfully created the new item in collection ${selectedCollectionId}.`;
+        setSuccessMessage(`Successfully created the new item in collection ${selectedCollectionId}.`);
       } else {
         const coercedData = data as StacItem;
         await update(coercedData);  
-        message = `Successfully updated the item ${itemId}.`;
+        setSuccessMessage(`Successfully updated the item ${itemId}.`);
       }
-      setSuccessMessage(String(message));
       reload();
-    } catch (error: unknown) {
+    } catch (error) {
       const apiError = error as ApiError;
       if (apiError.detail) {
         const errorDetails = apiError.detail;
@@ -274,6 +274,18 @@ export default function ItemForm() {
       setSelectedCollectionId(watchedValues.collection || "");
       setValue("properties.license", watchedValues.properties?.license || "");
     }
+    setLastMode(isJsonMode ? "form" : "json");
+  };
+
+  const handleCreateNewItem = () => {
+    reset(defaultValues);
+    setSuccessMessage("");
+    setErrorMessage("");
+    if (lastMode === "json") {
+      setJsonMode(true);
+    } else {
+      setJsonMode(false);
+    }
   };
 
   useEffect(() => {
@@ -310,27 +322,15 @@ export default function ItemForm() {
           <Box flex="1">
             <AlertTitle>Success!</AlertTitle>
             <AlertDescription>
-              {isNewItem ? (
-                <>
-                  {successMessage}{" "}
-                  <RouterLink to={`/collections/${selectedCollectionId}/`}>View Item</RouterLink>
-                  <Box mt="2">
-                    <Button
-                      variant="link"
-                      onClick={() => window.location.reload()}
-                    >
-                      Create another item
-                    </Button>
-                  </Box>
-                </>
-              ) : (
-                <>
-                  {successMessage}{" "}
-                  <RouterLink to={`/collections/${collectionId}`}>
-                    View updated item
-                  </RouterLink>
-                </>
-              )}
+              {successMessage}{" "}
+              <Box mt="2">
+                <Button
+                  variant="link"
+                  onClick={handleCreateNewItem}
+                >
+                  Create another item
+                </Button>
+              </Box>
             </AlertDescription>
           </Box>
           <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
