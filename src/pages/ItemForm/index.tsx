@@ -257,6 +257,8 @@ export default function ItemForm() {
       Object.keys(parsedData).forEach((key) => {
         setValue(key as keyof FormValues, parsedData[key]);
       });
+      setSelectedCollectionId(parsedData.collection || "");
+      setValue("properties.license", parsedData.properties?.license || "");
       setJsonError("");
     } catch (error) {
       setJsonError("Invalid JSON format");
@@ -267,6 +269,10 @@ export default function ItemForm() {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
       setJsonInput(JSON.stringify({ ...watchedValues }, null, 2));
+    }else {
+      // Sync form values when switching back from JSON mode
+      setSelectedCollectionId(watchedValues.collection || "");
+      setValue("properties.license", watchedValues.properties?.license || "");
     }
   };
 
