@@ -87,7 +87,7 @@ const defaultValues: FormValues = {
       ],
     ],
   },
-  bbox: [0, 0, 10, 10],
+  bbox: [0, 0, 0, 0],
   properties: {
     title: "",
     description: "",
@@ -441,7 +441,35 @@ export default function ItemForm() {
                 {...register("properties.end_datetime")}
               />
             </Box>
-          </fieldset>
+          </fieldset>        
+          {/* BBox Input */}
+          <Box mt={4}>
+            <Text as="h2" fontWeight="bold">
+              Bounding Box (Bbox)
+            </Text>
+            <Box display="flex" gap="4" mt="2">
+              <NumberInput
+                label="Min X"
+                error={errors.bbox?.[0]}
+                {...register("bbox.0", { required: "Min X is required" })}
+              />
+              <NumberInput
+                label="Min Y"
+                error={errors.bbox?.[1]}
+                {...register("bbox.1", { required: "Min Y is required" })}
+              />
+              <NumberInput
+                label="Max X"
+                error={errors.bbox?.[2]}
+                {...register("bbox.2", { required: "Max X is required" })}
+              />
+              <NumberInput
+                label="Max Y"
+                error={errors.bbox?.[3]}
+                {...register("bbox.3", { required: "Max Y is required" })}
+              />
+            </Box>
+          </Box>
 
           <fieldset>
             <legend>Providers</legend>
