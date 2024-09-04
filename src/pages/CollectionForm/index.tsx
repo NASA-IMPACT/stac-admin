@@ -256,6 +256,47 @@ function CollectionForm() {
             {...register("description", { required: "Enter a collection description." })}
           />
 
+          {/* Bounding Box fields */}
+          <Box>
+            <Text mt="4">Bounding Box</Text>
+            <Box display="flex" gap="2">
+              <Input
+                placeholder="Min X"
+                {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })}
+              />
+              <Input
+                placeholder="Min Y"
+                {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })}
+              />
+              <Input
+                placeholder="Max X"
+                {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })}
+              />
+              <Input
+                placeholder="Max Y"
+                {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })}
+              />
+            </Box>
+            {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
+          </Box>
+
+          {/* Temporal Extent fields */}
+          <Box>
+            <Text mt="4">Temporal Extent</Text>
+            <Box display="flex" gap="2">
+              <Input
+                type="datetime-local"
+                {...register("extent.temporal.interval[0][0]", { required: "Start date is required." })}
+              />
+              <Input
+                type="datetime-local"
+                {...register("extent.temporal.interval[0][1]", { required: "End date is required." })}
+              />
+            </Box>
+            {errors.extent?.temporal && <Text color="red.500">Both start and end dates are required.</Text>}
+          </Box>
+
+
           {/* License dropdown */}
           <Box>
             <label htmlFor="license">License</label>

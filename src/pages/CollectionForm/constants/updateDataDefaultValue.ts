@@ -6,10 +6,10 @@ export const defaultData = {
   description: "",
   extent: {
     spatial: {
-      bbox: [[0, 0, 0, 0]]
+      bbox: [[null, null, null, null]]
     },
     temporal: {
-      interval: [["2025-01-01T00:00:00Z", "2085-03-31T12:00:00Z"]]
+      interval: [[null, null]]
     }
   },
   license: "",
