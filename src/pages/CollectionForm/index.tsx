@@ -98,14 +98,13 @@ function CollectionForm() {
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
       setNewCollectionId(collectionId);
       reload();
-    } catch (error) {
-      const action = isEditMode ? "editing" : "creating";
-
-      if (error instanceof Error) {
-        const apiError = error as ApiError;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.detail) {
         const errorDetails = apiError.detail;
+        const action = isEditMode ? "editing" : "creating";
 
-        if (errorDetails?.code && errorDetails?.description) {
+        if (errorDetails.code && errorDetails.description) {
           setErrorMessage (
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
@@ -123,7 +122,7 @@ function CollectionForm() {
               </Box>
             </Box>
           );
-        } else if (errorDetails?.detail) {
+        } else if (errorDetails.detail) {
           setErrorMessage (
             <Box>
               <Text fontWeight="bold">
@@ -135,9 +134,7 @@ function CollectionForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
-      } else {
-        setErrorMessage("An unexpected error occurred.");
-      }
+      } 
     }
   };
     
