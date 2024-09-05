@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { Box, Heading, Icon, Text } from "@chakra-ui/react";
 import { MdEdit } from "react-icons/md";
 import Map, { Source, Layer, MapRef } from "react-map-gl/maplibre";
 import StacFields from "@radiantearth/stac-fields";
 import { useItem } from "@developmentseed/stac-react";
 import getBbox from "@turf/bbox";
-
 import { usePageTitle } from "../../hooks";
 import { HeadingLead, Loading } from "../../components";
 import PropertyList from "./PropertyList";
@@ -32,25 +31,22 @@ const cogMediaTypes = [
 
 function ItemDetail() {
   const { collectionId, itemId } = useParams();
+  const navigate = useNavigate();
   usePageTitle(`Item ${itemId}`);
   const itemResource = `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
-  const { item, state } = useItem(itemResource);
-
-  const [ map, setMap ] = useState<MapRef>();
+  const { item, state, error, reload } = useItem(itemResource);
+  const [map, setMap] = useState<MapRef>();
   const setMapRef = (m: MapRef) => setMap(m);
+  const bounds = item ? getBbox(item) : null;
 
-  // Fit the map view around the current results bbox
   useEffect(() => {
-    const bounds = item && getBbox(item);
-
     if (map && bounds) {
       const [x1, y1, x2, y2] = bounds;
       map.fitBounds([x1, y1, x2, y2], { padding: 30, duration: 0 });
     }
-  }, [item, map]);
-
+  }, [map, bounds]); 
   const previewAsset = useMemo(() => {
-    if (!item) return;
+    if (!item) return null;
 
     return Object.values(item.assets).reduce(
       (preview, asset) => {
@@ -66,12 +62,22 @@ function ItemDetail() {
         }
         return preview;
       },
-      undefined
+      null
     );
   }, [item]);
 
-  if (!item || state === "LOADING") {
+  useEffect(() => {
+    if (error || state === "ERROR") {
+      navigate("/sorry");
+    }
+  }, [state, error, navigate, reload]);
+  
+  if (state === "LOADING") {
     return <Loading>Loading item...</Loading>;
+  }
+
+  if (!item) {
+    return null; 
   }
 
   const { title, description, ...properties } = item.properties;
@@ -87,7 +93,7 @@ function ItemDetail() {
           <Box height="60" borderBottom="1px solid" borderColor="gray.200" pb="8">
             <Map ref={setMapRef} dragPan={false} scrollZoom={false} cursor="default">
               <BackgroundTiles />
-              { previewAsset && (
+              {previewAsset && (
                 <Source
                   id="preview"
                   type="raster"
@@ -98,13 +104,9 @@ function ItemDetail() {
                   <Layer id="preview-tiles" type="raster" />
                 </Source>
               )}
-              <Source
-                id="results"
-                type="geojson"
-                data={item}
-              >
+              <Source id="results" type="geojson" data={item}>
                 <Layer id="results-line" type="line" paint={resultsOutline} />
-                { !previewAsset && <Layer id="results-fill" type="fill" paint={resultsFill} /> }
+                {!previewAsset && <Layer id="results-fill" type="fill" paint={resultsFill} />}
               </Source>
             </Map>
           </Box>
@@ -112,16 +114,22 @@ function ItemDetail() {
         </Box>
         <Box fontSize="sm" borderLeft="1px solid" borderColor="gray.100" pl="8">
           <Box display="flex" gap="4" alignItems="baseline">
-            <Text as="h3" fontSize="md" my="0" flex="1">About</Text>
-            <Link to="edit/" title="Edit item"><Icon as={MdEdit} boxSize="4" /></Link>
+            <Text as="h3" fontSize="md" my="0" flex="1">
+              About
+            </Text>
+            <Link to="edit/" title="Edit item">
+              <Icon as={MdEdit} boxSize="4" />
+            </Link>
           </Box>
-          { (title || description) && (
+          {(title || description) && (
             <Text mt="0">
-              { title && <Text as="b">{ title } </Text> }
-              { description }
+              {title && <Text as="b">{title} </Text>}
+              {description}
             </Text>
           )}
-          { formattedProperties.map((property: PropertyGroup) => <PropertyList key={property.extension || "default-props"} properties={property} /> )}
+          {formattedProperties.map((property: PropertyGroup) => (
+            <PropertyList key={property.extension || "default-props"} properties={property} />
+          ))}
         </Box>
       </Box>
     </>
