@@ -34,7 +34,7 @@ function ItemDetail() {
   const navigate = useNavigate();
   usePageTitle(`Item ${itemId}`);
   const itemResource = `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
-  const { item, state, error, reload } = useItem(itemResource);
+  const { item, state, error } = useItem(itemResource);
   const [map, setMap] = useState<MapRef>();
   const setMapRef = (m: MapRef) => setMap(m);
   const bounds = item ? getBbox(item) : null;
@@ -68,9 +68,9 @@ function ItemDetail() {
 
   useEffect(() => {
     if (error || state === "ERROR") {
-      navigate("/sorry");
+      navigate("/sorry", { state: { type: "item" } });
     }
-  }, [state, error, navigate, reload]);
+  }, [state, error, navigate]);
   
   if (state === "LOADING") {
     return <Loading>Loading item...</Loading>;
