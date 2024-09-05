@@ -43,7 +43,6 @@ import {
   DateTimeInput,
 } from "../../components/forms";
 
-// Custom error types
 interface ApiErrorDetail {
   code?: string;
   description?: string | { msg: string }[];
@@ -120,14 +119,6 @@ export default function ItemForm() {
   const location = useLocation();
 
   usePageTitle(isNewItem ? "Add New Item" : `Edit item ${itemId}`);
-
-  const itemResource = isNewItem
-    ? ""
-    : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
-
-  // const { item, state, reload } = useItem(itemResource);
-  // const { update, state: updateState } = useUpdateItem(itemResource);
-  // const { collections } = useCollections();
   const { item, state, reload } = useItem(
     isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
   );
@@ -135,21 +126,16 @@ export default function ItemForm() {
     isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
   );
   const { collections } = useCollections();
-  
+
   useEffect(() => {
-    // Check if navigation state has mode information
     if (location.state?.resetForm) {
       setJsonMode(location.state.lastMode === "json");
     }
   }, [location.state]);
 
 
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    collectionId || ""
-  );
-
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(collectionId || "");
   const [isJsonMode, setJsonMode] = useState(false);
-  const [lastMode, setLastMode] = useState<"json" | "form">("form");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -298,23 +284,10 @@ export default function ItemForm() {
     if (!isJsonMode) {
       setJsonInput(JSON.stringify({ ...watchedValues }, null, 2));
     }else {
-      // Sync form values when switching back from JSON mode
       setSelectedCollectionId(watchedValues.collection || "");
       setValue("properties.license", watchedValues.properties?.license || "");
     }
-    setLastMode(isJsonMode ? "form" : "json");
   };
-
-  // const handleCreateNewItem = () => {
-  //   reset(defaultValues);
-  //   setSuccessMessage("");
-  //   setErrorMessage("");
-  //   if (lastMode === "json") {
-  //     setJsonMode(true);
-  //   } else {
-  //     setJsonMode(false);
-  //   }
-  // };
 
   useEffect(() => {
     if (!item || isNewItem) return;

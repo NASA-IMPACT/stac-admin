@@ -10,7 +10,7 @@ export default function SuccessPage() {
     navigate("/items/new_item/", {
       state: {
         resetForm: true,
-        lastMode: mode,  // Pass the mode back to open the form in the same mode
+        lastMode: mode,
       },
     });
   };
