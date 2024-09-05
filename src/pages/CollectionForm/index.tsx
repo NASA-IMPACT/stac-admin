@@ -21,15 +21,12 @@ import {
 } from "@chakra-ui/react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
-import { useParams, Link as RouterLink } from "react-router-dom";
+import { useParams, Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
-
 import useUpdateCollection from "./useUpdateCollection";
-
 import { HeadingLead } from "../../components/HeadingLead";
 import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
-
 import { StacCollection } from "stac-ts";
 import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
@@ -48,7 +45,15 @@ interface ApiError extends Error {
 function CollectionForm() {
   const { collectionId } = useParams();
   const isEditMode = !!collectionId;
+  const navigate = useNavigate();
+  const location = useLocation(); // Add location to capture state
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
+
+  useEffect(() => {
+    if (location.state?.resetForm) {
+      setJsonMode(location.state.lastMode === "json");
+    }
+  }, [location.state]);
 
   const { collection, reload } = useCollection(collectionId || "");
   const { update, state: updateState } = useUpdateCollection();
@@ -92,11 +97,20 @@ function CollectionForm() {
     setSuccessMessage("");
     setErrorMessage("");
     const collectionId = data.id;
-  
+
     try {
       const updatedCollection = await update(data, isEditMode);
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
       setNewCollectionId(collectionId);
+      navigate("/success", {
+        state: {
+          successMessage: `Successfully ${isEditMode ? "updated" : "created"} collection ${collectionId}.`,
+          isNewItem: !isEditMode,
+          collectionId: updatedCollection.id,
+          mode: isJsonMode ? "json" : "form",
+        },
+      });
+
       reload();
     } catch (error: unknown) {
       const apiError = error as ApiError;
@@ -105,7 +119,7 @@ function CollectionForm() {
         const action = isEditMode ? "editing" : "creating";
 
         if (errorDetails.code && errorDetails.description) {
-          setErrorMessage (
+          setErrorMessage(
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
@@ -123,7 +137,7 @@ function CollectionForm() {
             </Box>
           );
         } else if (errorDetails.detail) {
-          setErrorMessage (
+          setErrorMessage(
             <Box>
               <Text fontWeight="bold">
                 Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.
@@ -134,11 +148,9 @@ function CollectionForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
-      } 
+      }
     }
   };
-    
-  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
@@ -146,7 +158,7 @@ function CollectionForm() {
 
     try {
       const parsedData = JSON.parse(newJson);
-      Object.keys(parsedData).forEach(key => {
+      Object.keys(parsedData).forEach((key) => {
         setValue(key as keyof FormValues, parsedData[key]);
       });
       setJsonError("");
@@ -193,10 +205,7 @@ function CollectionForm() {
                     {newCollectionId}
                   </RouterLink>.
                   <Box mt="2">
-                    <Button
-                      variant="link"
-                      onClick={() => window.location.reload()}
-                    >
+                    <Button variant="link" onClick={() => window.location.reload()}>
                       Create another collection
                     </Button>
                   </Box>
@@ -207,7 +216,6 @@ function CollectionForm() {
           <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
         </Alert>
       )}
-
 
       {errorMessage && (
         <Alert status="error" mb={4}>
@@ -239,43 +247,19 @@ function CollectionForm() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)}>
           {!isEditMode && (
-            <TextInput
-              label="ID"
-              error={errors.id}
-              {...register("id", { required: "Enter a collection ID." })}
-            />
+            <TextInput label="ID" error={errors.id} {...register("id", { required: "Enter a collection ID." })} />
           )}
-          <TextInput
-            label="Title"
-            error={errors.title}
-            {...register("title")}
-          />
-          <TextAreaInput
-            label="Description"
-            error={errors.description}
-            {...register("description", { required: "Enter a collection description." })}
-          />
+          <TextInput label="Title" error={errors.title} {...register("title")} />
+          <TextAreaInput label="Description" error={errors.description} {...register("description", { required: "Enter a collection description." })} />
 
           {/* Bounding Box fields */}
           <Box>
             <Text mt="4">Bounding Box</Text>
             <Box display="flex" gap="2">
-              <Input
-                placeholder="Min X"
-                {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })}
-              />
-              <Input
-                placeholder="Min Y"
-                {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })}
-              />
-              <Input
-                placeholder="Max X"
-                {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })}
-              />
-              <Input
-                placeholder="Max Y"
-                {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })}
-              />
+              <Input placeholder="Min X" {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })} />
+              <Input placeholder="Min Y" {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })} />
+              <Input placeholder="Max X" {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })} />
+              <Input placeholder="Max Y" {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })} />
             </Box>
             {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
           </Box>
@@ -284,18 +268,11 @@ function CollectionForm() {
           <Box>
             <Text mt="4">Temporal Extent</Text>
             <Box display="flex" gap="2">
-              <Input
-                type="datetime-local"
-                {...register("extent.temporal.interval[0][0]", { required: "Start date is required." })}
-              />
-              <Input
-                type="datetime-local"
-                {...register("extent.temporal.interval[0][1]", { required: "End date is required." })}
-              />
+              <Input type="datetime-local" {...register("extent.temporal.interval[0][0]", { required: "Start date is required." })} />
+              <Input type="datetime-local" {...register("extent.temporal.interval[0][1]", { required: "End date is required." })} />
             </Box>
             {errors.extent?.temporal && <Text color="red.500">Both start and end dates are required.</Text>}
           </Box>
-
 
           {/* License dropdown */}
           <Box>
@@ -322,12 +299,7 @@ function CollectionForm() {
           <Controller
             name="keywords"
             render={({ field }) => (
-              <ArrayInput
-                label="Keywords"
-                error={errors.keywords}
-                helper="Enter a comma-separated list of keywords."
-                {...field}
-              />
+              <ArrayInput label="Keywords" error={errors.keywords} helper="Enter a comma-separated list of keywords." {...field} />
             )}
             control={control}
           />
@@ -349,16 +321,10 @@ function CollectionForm() {
                 {fields.map(({ id }, idx: number) => (
                   <Tr key={id}>
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.name`)}
-                        aria-labelledby="provider_name"
-                      />
+                      <Input {...register(`providers.${idx}.name`)} aria-labelledby="provider_name" />
                     </Td>
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.description`)}
-                        aria-labelledby="provider_description"
-                      />
+                      <Input {...register(`providers.${idx}.description`)} aria-labelledby="provider_description" />
                     </Td>
                     <Td>
                       <Controller
@@ -370,7 +336,7 @@ function CollectionForm() {
                               { value: "licensor", label: "Licensor" },
                               { value: "producer", label: "Producer" },
                               { value: "processor", label: "Processor" },
-                              { value: "host", label: "Host" }
+                              { value: "host", label: "Host" },
                             ]}
                             {...field}
                           />
@@ -379,31 +345,17 @@ function CollectionForm() {
                       />
                     </Td>
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.url`)}
-                        aria-labelledby="provider_url"
-                      />
+                      <Input {...register(`providers.${idx}.url`)} aria-labelledby="provider_url" />
                     </Td>
                     <Td>
-                      <IconButton
-                        type="button"
-                        size="sm"
-                        icon={<MdDelete />}
-                        onClick={() => remove(idx)}
-                        aria-label="Remove provider"
-                      />
+                      <IconButton type="button" size="sm" icon={<MdDelete />} onClick={() => remove(idx)} aria-label="Remove provider" />
                     </Td>
                   </Tr>
                 ))}
               </Tbody>
             </Table>
             <Box textAlign="right" mt="2">
-              <Button
-                type="button"
-                variant="link"
-                leftIcon={<MdAdd />}
-                onClick={() => append({ name: "" })}
-              >
+              <Button type="button" variant="link" leftIcon={<MdAdd />} onClick={() => append({ name: "" })}>
                 Add provider
               </Button>
             </Box>
