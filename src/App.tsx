@@ -20,6 +20,7 @@ import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
 import WorkflowPage from "./pages/Workflows/WorkflowPage";
+import SuccessPage from "./pages/successPage";
 
 export const App = () => {
   const workflowsEnabled = process.env.REACT_APP_WORKFLOWS === "True";
@@ -54,6 +55,7 @@ export const App = () => {
                 <Route path="/collections/:collectionId/edit/" element={<CollectionForm />} />
                 <Route path="/items/" element={<ItemList />} />
                 <Route path="items/new_item/" element={<ItemForm />} />
+                <Route path="/success" element={<SuccessPage />} />
                 <Route path="/collections/:collectionId/items/:itemId/" element={<ItemDetail />} />
                 <Route path="/collections/:collectionId/items/:itemId/edit/" element={<ItemForm />} />
                 {workflowsEnabled && (

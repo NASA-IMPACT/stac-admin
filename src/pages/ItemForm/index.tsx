@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
@@ -116,6 +116,8 @@ const defaultValues: FormValues = {
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
   const isNewItem = !itemId;
+  const navigate = useNavigate();
+  const location = useLocation();
 
   usePageTitle(isNewItem ? "Add New Item" : `Edit item ${itemId}`);
 
@@ -123,9 +125,24 @@ export default function ItemForm() {
     ? ""
     : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
 
-  const { item, state, reload } = useItem(itemResource);
-  const { update, state: updateState } = useUpdateItem(itemResource);
+  // const { item, state, reload } = useItem(itemResource);
+  // const { update, state: updateState } = useUpdateItem(itemResource);
+  // const { collections } = useCollections();
+  const { item, state, reload } = useItem(
+    isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
+  );
+  const { update, state: updateState } = useUpdateItem(
+    isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
+  );
   const { collections } = useCollections();
+  
+  useEffect(() => {
+    // Check if navigation state has mode information
+    if (location.state?.resetForm) {
+      setJsonMode(location.state.lastMode === "json");
+    }
+  }, [location.state]);
+
 
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     collectionId || ""
@@ -145,7 +162,6 @@ export default function ItemForm() {
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
     watch,
   } = useForm<FormValues>({
     defaultValues: isNewItem ? defaultValues : (item as FormValues),
@@ -181,7 +197,6 @@ export default function ItemForm() {
   const onSubmit = async (data: FormValues) => {
     setSuccessMessage("");
     setErrorMessage("");
-
     if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
       data.properties.datetime += "Z";
     }
@@ -201,11 +216,25 @@ export default function ItemForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        setSuccessMessage(`Successfully created the new item in collection ${selectedCollectionId}.`);
+        navigate("/success", {
+          state: {
+            successMessage: `Successfully created the new item in collection ${selectedCollectionId}.`,
+            isNewItem: true,
+            selectedCollectionId,
+            mode: isJsonMode ? "json" : "form",
+          },
+        });
       } else {
         const coercedData = data as StacItem;
-        await update(coercedData);  
-        setSuccessMessage(`Successfully updated the item ${itemId}.`);
+        await update(coercedData); 
+        navigate("/success", {
+          state: {
+            successMessage: `Successfully updated the item ${itemId}.`,
+            isNewItem: false,
+            collectionId,
+            mode: isJsonMode ? "json" : "form",
+          },
+        });
       }
       reload();
     } catch (error) {
@@ -213,7 +242,6 @@ export default function ItemForm() {
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isNewItem ? "creating" : "editing";
-
         if (errorDetails.code && errorDetails.description) {
           setErrorMessage (
             <Box>
@@ -277,16 +305,16 @@ export default function ItemForm() {
     setLastMode(isJsonMode ? "form" : "json");
   };
 
-  const handleCreateNewItem = () => {
-    reset(defaultValues);
-    setSuccessMessage("");
-    setErrorMessage("");
-    if (lastMode === "json") {
-      setJsonMode(true);
-    } else {
-      setJsonMode(false);
-    }
-  };
+  // const handleCreateNewItem = () => {
+  //   reset(defaultValues);
+  //   setSuccessMessage("");
+  //   setErrorMessage("");
+  //   if (lastMode === "json") {
+  //     setJsonMode(true);
+  //   } else {
+  //     setJsonMode(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (!item || isNewItem) return;
@@ -326,7 +354,7 @@ export default function ItemForm() {
               <Box mt="2">
                 <Button
                   variant="link"
-                  onClick={handleCreateNewItem}
+                  onClick={() => window.location.reload()}
                 >
                   Create another item
                 </Button>
