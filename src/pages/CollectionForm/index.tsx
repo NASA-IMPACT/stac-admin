@@ -46,7 +46,7 @@ function CollectionForm() {
   const { collectionId } = useParams();
   const isEditMode = !!collectionId;
   const navigate = useNavigate();
-  const location = useLocation(); // Add location to capture state
+  const location = useLocation();
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
 
   useEffect(() => {
@@ -85,7 +85,6 @@ function CollectionForm() {
     loadLicenses();
   }, []);
 
-  // Synchronize the form values with the JSON input
   useEffect(() => {
     if (!isJsonMode) {
       const updatedJson = JSON.stringify(watchedValues, null, 2);
@@ -93,11 +92,23 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  const formatISODate = (date: string) => {
+    if (date && !date.endsWith("Z") && !date.endsWith("+00:00")) {
+      return date + ":00Z";
+    }
+    return date;
+  };
+
   const onSubmit = async (data: StacCollection) => {
     setSuccessMessage("");
     setErrorMessage("");
+    if (data.extent.temporal.interval[0][0]) {
+      data.extent.temporal.interval[0][0] = formatISODate(data.extent.temporal.interval[0][0]);
+    }
+    if (data.extent.temporal.interval[0][1]) {
+      data.extent.temporal.interval[0][1] = formatISODate(data.extent.temporal.interval[0][1]);
+    }
     const collectionId = data.id;
-
     try {
       const updatedCollection = await update(data, isEditMode);
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
@@ -110,14 +121,13 @@ function CollectionForm() {
           mode: isJsonMode ? "json" : "form",
         },
       });
-
       reload();
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isEditMode ? "editing" : "creating";
-
+  
         if (errorDetails.code && errorDetails.description) {
           setErrorMessage(
             <Box>
@@ -151,7 +161,7 @@ function CollectionForm() {
       }
     }
   };
-
+  
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
     setJsonInput(newJson);
@@ -275,7 +285,6 @@ function CollectionForm() {
             </Box>
             {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
           </Box>
-
 
           {/* Temporal Extent fields */}
           <Box>
