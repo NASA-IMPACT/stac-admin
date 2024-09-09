@@ -35,6 +35,7 @@ import { defaultData } from "./constants/updateDataDefaultValue";
 interface ApiErrorDetail {
   code?: string;
   description?: string | { msg: string }[];
+  errors?: string | { msg: string }[];
   detail?: string;
 }
 
@@ -98,17 +99,22 @@ function CollectionForm() {
     }
     return date;
   };
-
+  
+  
   const onSubmit = async (data: StacCollection) => {
     setSuccessMessage("");
     setErrorMessage("");
+
+    // Convert temporal extent to ISO format if present
     if (data.extent.temporal.interval[0][0]) {
       data.extent.temporal.interval[0][0] = formatISODate(data.extent.temporal.interval[0][0]);
     }
     if (data.extent.temporal.interval[0][1]) {
       data.extent.temporal.interval[0][1] = formatISODate(data.extent.temporal.interval[0][1]);
     }
+
     const collectionId = data.id;
+
     try {
       const updatedCollection = await update(data, isEditMode);
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
@@ -124,24 +130,40 @@ function CollectionForm() {
       reload();
     } catch (error: unknown) {
       const apiError = error as ApiError;
+
+      // Handle error details thoroughly
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isEditMode ? "editing" : "creating";
-  
+
         if (errorDetails.code && errorDetails.description) {
           setErrorMessage(
             <Box>
-              <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.description) ? (
                   errorDetails.description.map((desc: { msg: string }) => (
-                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>
-                      {desc.msg}
-                    </Text>
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{desc.msg}</Text>
                   ))
                 ) : (
                   <Text>{errorDetails.description}</Text>
+                )}
+              </Box>
+            </Box>
+          );
+        } else if (errorDetails.detail && errorDetails.errors) {
+          setErrorMessage(
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.errors) ? (
+                  errorDetails.errors.map((err: { msg: string }) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{err.msg}</Text>
+                  ))
+                ) : (
+                  <Text>{errorDetails.errors}</Text>
                 )}
               </Box>
             </Box>
@@ -158,10 +180,13 @@ function CollectionForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
+      } else {
+        // If the API returns error in another format
+        setErrorMessage("Unknown error occurred. Please try again.");
       }
     }
   };
-  
+
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
     setJsonInput(newJson);
@@ -340,8 +365,8 @@ function CollectionForm() {
                 </Tr>
               </Thead>
               <Tbody>
-                {fields.map(({ id }, idx: number) => (
-                  <Tr key={id}>
+                {fields.map((field, idx: number) => (
+                  <Tr key={field.id || idx}> {/* Using 'field.id' or a unique identifier if available */}
                     <Td>
                       <Input {...register(`providers.${idx}.name`)} aria-labelledby="provider_name" />
                     </Td>
@@ -370,7 +395,13 @@ function CollectionForm() {
                       <Input {...register(`providers.${idx}.url`)} aria-labelledby="provider_url" />
                     </Td>
                     <Td>
-                      <IconButton type="button" size="sm" icon={<MdDelete />} onClick={() => remove(idx)} aria-label="Remove provider" />
+                      <IconButton
+                        type="button"
+                        size="sm"
+                        icon={<MdDelete />}
+                        onClick={() => remove(idx)}
+                        aria-label="Remove provider"
+                      />
                     </Td>
                   </Tr>
                 ))}
