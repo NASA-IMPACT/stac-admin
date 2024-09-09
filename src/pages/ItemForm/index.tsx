@@ -180,18 +180,41 @@ export default function ItemForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  const handleRangeUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.datetime", null);
+    }
+    return `${v}Z`;
+  };
+
+  const handleSingleDateUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.start_datetime", undefined);
+      setValue("properties.end_datetime", undefined);
+      return `${v}Z`;
+    }
+    return null;
+  };
+
+
+  useEffect(() => {
+    if (!item || isNewItem) return;
+
+    const { start_datetime, end_datetime, datetime } = item.properties;
+    if (start_datetime && end_datetime) {
+      setDateType("range");
+      setValue("properties.start_datetime", start_datetime.split("Z")[0]);
+      setValue("properties.end_datetime", end_datetime.split("Z")[0]);
+    } else {
+      setDateType("single");
+      setValue("properties.datetime", datetime.split("Z")[0]);
+    }
+  }, [item, setValue, isNewItem]);
+
   const onSubmit = async (data: FormValues) => {
     setSuccessMessage("");
     setErrorMessage("");
-    if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
-      data.properties.datetime += "Z";
-    }
-    if (data.properties.start_datetime && !data.properties.start_datetime.endsWith("Z")) {
-      data.properties.start_datetime += "Z";
-    }
-    if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
-      data.properties.end_datetime += "Z";
-    }
+
     const itemId = data.id;
     try {
       if (isNewItem) {
@@ -288,20 +311,6 @@ export default function ItemForm() {
       setValue("properties.license", watchedValues.properties?.license || "");
     }
   };
-
-  useEffect(() => {
-    if (!item || isNewItem) return;
-
-    const { start_datetime, end_datetime, datetime } = item.properties;
-    if (start_datetime && end_datetime) {
-      setDateType("range");
-      setValue("properties.start_datetime", start_datetime.split("Z")[0]);
-      setValue("properties.end_datetime", end_datetime.split("Z")[0]);
-    } else {
-      setDateType("single");
-      setValue("properties.datetime", datetime.split("Z")[0]);
-    }
-  }, [item, setValue, isNewItem]);
 
   const [dateType, setDateType] = useState<string>();
 
@@ -426,10 +435,12 @@ export default function ItemForm() {
               aria-hidden={dateType !== "single"}
               display={dateType === "single" ? "block" : "none"}
             >
-              <DateTimeInput
+              <DateTimeInput  
                 label="Enter date"
                 error={errors.properties?.datetime}
-                {...register("properties.datetime")}
+                {...register("properties.datetime", {
+                  setValueAs: handleSingleDateUpdate
+                })}
               />
             </Box>
             <Box
@@ -440,15 +451,21 @@ export default function ItemForm() {
               <DateTimeInput
                 label="Date/time from"
                 error={errors.properties?.start_datetime}
-                {...register("properties.start_datetime")}
+                {...register("properties.start_datetime", {
+                  setValueAs: handleRangeUpdate
+                })}
               />
               <DateTimeInput
                 label="Date/time to"
                 error={errors.properties?.end_datetime}
-                {...register("properties.end_datetime")}
+                {...register("properties.end_datetime", {
+                  setValueAs: handleRangeUpdate
+                })}
               />
             </Box>
-          </fieldset>        
+          </fieldset>
+          
+                 
           {/* BBox Input */}
           <Box mt={4}>
             <Text as="h2" fontWeight="bold">
