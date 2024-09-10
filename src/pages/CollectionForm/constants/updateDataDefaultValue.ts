@@ -6,7 +6,7 @@ export const defaultData = {
   description: "",
   extent: {
     spatial: {
-      bbox: [[null, null, null, null]]
+      bbox: [[0, 0, 0, 0]]
     },
     temporal: {
       interval: [[null, null]]
