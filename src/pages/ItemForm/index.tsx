@@ -184,18 +184,20 @@ export default function ItemForm() {
   const handleRangeUpdate = (v?: string) => {
     if (v) {
       setValue("properties.datetime", null);
+      return v.endsWith("Z") ? v : `${v}Z`;
     }
-    return `${v}Z`;
+    return v;
   };
-
+  
   const handleSingleDateUpdate = (v?: string) => {
     if (v) {
       setValue("properties.start_datetime", undefined);
       setValue("properties.end_datetime", undefined);
-      return `${v}Z`;
+      return v.endsWith("Z") ? v : `${v}Z`;
     }
     return null;
   };
+  
 
 
   useEffect(() => {
