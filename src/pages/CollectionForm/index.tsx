@@ -26,7 +26,7 @@ import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
 import useUpdateCollection from "./useUpdateCollection";
 import { HeadingLead } from "../../components/HeadingLead";
-import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
+import { TextInput, TextAreaInput, ArrayInput, CheckboxField, DateTimeInput } from "../../components/forms";
 import { StacCollection } from "stac-ts";
 import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
@@ -93,28 +93,28 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
-  const formatISODate = (date: string) => {
-    if (date && !date.endsWith("Z") && !date.endsWith("+00:00")) {
-      return date + ":00Z";
+  const handleRangeUpdate = (v?: string) => {
+    if (v) {
+      setValue("extent.temporal.inteval", null);
+      return v.endsWith("Z") ? v : `${v}:00Z`;
     }
-    return date;
+    return v;
   };
-  
+
+  useEffect(() => {
+    if (!collection || isEditMode) return;
+
+    const { start_datetime, end_datetime } = collection.extent.temporal.interval;
+    if (start_datetime && end_datetime) {
+      setValue("extent.temporal.interval[0][0]", start_datetime.split("Z")[0]);
+      setValue("extent.temporal.interval[0][1]", end_datetime.split("Z")[0]);
+    }
+  }, [collection, setValue, isEditMode]);
   
   const onSubmit = async (data: StacCollection) => {
     setSuccessMessage("");
     setErrorMessage("");
-
-    // Convert temporal extent to ISO format if present
-    if (data.extent.temporal.interval[0][0]) {
-      data.extent.temporal.interval[0][0] = formatISODate(data.extent.temporal.interval[0][0]);
-    }
-    if (data.extent.temporal.interval[0][1]) {
-      data.extent.temporal.interval[0][1] = formatISODate(data.extent.temporal.interval[0][1]);
-    }
-
     const collectionId = data.id;
-
     try {
       const updatedCollection = await update(data, isEditMode);
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
@@ -314,9 +314,19 @@ function CollectionForm() {
           {/* Temporal Extent fields */}
           <Box>
             <Text mt="4">Temporal Extent</Text>
-            <Box display="flex" gap="2">
-              <Input type="datetime-local" {...register("extent.temporal.interval[0][0]", { required: "Start date is required." })} />
-              <Input type="datetime-local" {...register("extent.temporal.interval[0][1]", { required: "End date is required." })} />
+            <Box display="flex" gap="4">
+              <DateTimeInput
+                label="Date/time from"
+                {...register("extent.temporal.interval[0][0]", {
+                  setValueAs: handleRangeUpdate
+                })}
+              />
+              <DateTimeInput
+                label="Date/time to"
+                {...register("extent.temporal.interval[0][1]", {
+                  setValueAs: handleRangeUpdate
+                })}
+              />
             </Box>
             {errors.extent?.temporal && <Text color="red.500">Both start and end dates are required.</Text>}
           </Box>
