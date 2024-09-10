@@ -46,6 +46,7 @@ import {
 interface ApiErrorDetail {
   code?: string;
   description?: string | { msg: string }[];
+  errors?: string | { msg: string }[];
   detail?: string;
 }
 
@@ -269,6 +270,22 @@ export default function ItemForm() {
               </Box>
             </Box>
           );
+        } else if (errorDetails.detail && errorDetails.errors) {
+          setErrorMessage(
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Description: Validation failed for item with ID {itemId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.errors) ? (
+                  errorDetails.errors.map((err: { msg: string }) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{err.msg}</Text>
+                  ))
+                ) : (
+                  <Text>{errorDetails.errors}</Text>
+                )}
+              </Box>
+            </Box>
+          );
         } else if (errorDetails.detail) {
           setErrorMessage (
             <Box>
@@ -281,6 +298,8 @@ export default function ItemForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
+      } else {
+        setErrorMessage("Unknown error occurred. Please try again.");
       }
     }
   };
