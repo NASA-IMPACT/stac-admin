@@ -95,7 +95,6 @@ function CollectionForm() {
 
   const handleRangeUpdate = (v?: string) => {
     if (v) {
-      setValue("extent.temporal.inteval", null);
       return v.endsWith("Z") ? v : `${v}:00Z`;
     }
     return v;
