@@ -184,7 +184,7 @@ export default function ItemForm() {
   const handleRangeUpdate = (v?: string) => {
     if (v) {
       setValue("properties.datetime", null);
-      return v.endsWith("Z") ? v : `${v}Z`;
+      return v.endsWith("Z") ? v : `${v}:00Z`;
     }
     return v;
   };
@@ -193,7 +193,7 @@ export default function ItemForm() {
     if (v) {
       setValue("properties.start_datetime", undefined);
       setValue("properties.end_datetime", undefined);
-      return v.endsWith("Z") ? v : `${v}Z`;
+      return v.endsWith("Z") ? v : `${v}:00Z`;
     }
     return null;
   };
