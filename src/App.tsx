@@ -1,13 +1,6 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route
-} from "react-router-dom";
-import {
-  ChakraProvider,
-  Box,
-  Container,
-} from "@chakra-ui/react";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
+import { ChakraProvider, Box, Container, Heading } from "@chakra-ui/react";
 import { StacApiProvider } from "@developmentseed/stac-react";
 import theme from "./theme";
 import { MainNavigation } from "./components";
@@ -19,11 +12,26 @@ import ItemDetail from "./pages/ItemDetail";
 import ItemForm from "./pages/ItemForm";
 import NotFound from "./pages/NotFound";
 import CollectionDetail from "./pages/CollectionDetail";
+import { Login } from "./components/Login";
+import { Groups } from "./components/Groups";
+import { GroupDetails } from "./components/Groups/GroupDetails";
+import { NavContainer } from "./components/NavContainer";
+import ProtectedComponent from "./components/ProtectedComponent";
 
-export const App = () => (
-  <ChakraProvider theme={theme}>
-    <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}> {/* eslint-disable-line @typescript-eslint/no-non-null-assertion */}
-      <Router>
+function NotImplemented() {
+  return (
+    <NavContainer activeTab="N/A">
+      <Heading size="lg" fontWeight={500}>
+        Not Implemented
+      </Heading>
+    </NavContainer>
+  );
+}
+
+function AuthenticatedApp() {
+  return (
+    <ChakraProvider theme={theme}>
+      <StacApiProvider apiUrl={process.env.REACT_APP_STAC_API!}> {/* eslint-disable-line @typescript-eslint/no-non-null-assertion */}
         <Container mx="auto" p="5" bgColor="white" boxShadow="md">
           <Box
             as="header"
@@ -33,7 +41,9 @@ export const App = () => (
             pb="4"
             display="flex"
           >
-            <Box flex="1" fontWeight="bold" textTransform="uppercase">STAC Admin</Box>
+            <Box flex="1" fontWeight="bold" textTransform="uppercase">
+              STAC Admin
+            </Box>
             <MainNavigation />
           </Box>
           <Box as="main">
@@ -45,11 +55,28 @@ export const App = () => (
               <Route path="/items/" element={<ItemList />} />
               <Route path="/collections/:collectionId/items/:itemId/" element={<ItemDetail />} />
               <Route path="/collections/:collectionId/items/:itemId/edit/" element={<ItemForm />} />
+              <Route path="/groups/:id/:path" element={<ProtectedComponent Component={GroupDetails} />} />
+              <Route path="/groups" element={<ProtectedComponent Component={Groups} />} />
+              <Route path="/applications" element={<ProtectedComponent Component={NotImplemented} />} />
+              <Route path="/users" element={<ProtectedComponent Component={NotImplemented} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Box>
         </Container>
-      </Router>
-    </StacApiProvider>
-  </ChakraProvider>
-);
+      </StacApiProvider>
+    </ChakraProvider>
+  );
+}
+
+export default function App() {
+  const auth = useAuth();
+
+  if (!auth.isAuthenticated) {
+    return <Login />;
+  }
+  return (
+    <BrowserRouter>
+      <AuthenticatedApp />
+    </BrowserRouter>
+  );
+}
