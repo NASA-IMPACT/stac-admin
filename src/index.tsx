@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { ChakraProvider, ColorModeScript, extendTheme } from "@chakra-ui/react";
 import { AuthProvider, AuthProviderProps } from "react-oidc-context";
 import localOidcConfig from "./lib/localOidConfig.json";
-import prodOidcConfig from "./lib/localOidConfig.json";
+import prodOidcConfig from "./lib/prodOidConfig.json";
 import { BACKEND_URL, CLIENT_ID } from "./lib/constants";
 import { WebStorageStateStore } from "oidc-client-ts";
 import App from "./App";
@@ -31,7 +31,7 @@ const theme = extendTheme({
 let theOidcConfig;
 let redirect_uri: string;
 
-if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
+if (process.env.REACT_APP_NODE_ENV === "development") {
   theOidcConfig = localOidcConfig;
   redirect_uri = "http://localhost:5173/oauth-callback";
 } else {
