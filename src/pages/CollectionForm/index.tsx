@@ -21,15 +21,12 @@ import {
 } from "@chakra-ui/react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { MdAdd, MdDelete } from "react-icons/md";
-import { useParams, Link as RouterLink } from "react-router-dom";
+import { useParams, Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { useCollection } from "@developmentseed/stac-react";
 import { fetchLicenses, License } from "../../services/licenseService";
-
 import useUpdateCollection from "./useUpdateCollection";
-
 import { HeadingLead } from "../../components/HeadingLead";
-import { TextInput, TextAreaInput, ArrayInput, CheckboxField } from "../../components/forms";
-
+import { TextInput, TextAreaInput, ArrayInput, CheckboxField, DateTimeInput } from "../../components/forms";
 import { StacCollection } from "stac-ts";
 import { FormValues } from "./types";
 import { usePageTitle } from "../../hooks";
@@ -38,6 +35,7 @@ import { defaultData } from "./constants/updateDataDefaultValue";
 interface ApiErrorDetail {
   code?: string;
   description?: string | { msg: string }[];
+  errors?: string | { msg: string }[];
   detail?: string;
 }
 
@@ -48,7 +46,15 @@ interface ApiError extends Error {
 function CollectionForm() {
   const { collectionId } = useParams();
   const isEditMode = !!collectionId;
+  const navigate = useNavigate();
+  const location = useLocation();
   usePageTitle(isEditMode ? `Edit collection ${collectionId}` : "Add new collection");
+
+  useEffect(() => {
+    if (location.state?.resetForm) {
+      setJsonMode(location.state.lastMode === "json");
+    }
+  }, [location.state]);
 
   const { collection, reload } = useCollection(collectionId || "");
   const { update, state: updateState } = useUpdateCollection();
@@ -80,7 +86,6 @@ function CollectionForm() {
     loadLicenses();
   }, []);
 
-  // Synchronize the form values with the JSON input
   useEffect(() => {
     if (!isJsonMode) {
       const updatedJson = JSON.stringify(watchedValues, null, 2);
@@ -88,33 +93,57 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  const handleRangeUpdate = (v?: string) => {
+    if (v) {
+      return v.endsWith("Z") ? v : `${v}:00Z`;
+    }
+    return v;
+  };
+
+  useEffect(() => {
+    if (!collection || isEditMode) return;
+
+    const { start_datetime, end_datetime } = collection.extent.temporal.interval;
+    if (start_datetime && end_datetime) {
+      setValue("extent.temporal.interval[0][0]", start_datetime.split("Z")[0]);
+      setValue("extent.temporal.interval[0][1]", end_datetime.split("Z")[0]);
+    }
+  }, [collection, setValue, isEditMode]);
+  
   const onSubmit = async (data: StacCollection) => {
     setSuccessMessage("");
     setErrorMessage("");
     const collectionId = data.id;
-  
     try {
       const updatedCollection = await update(data, isEditMode);
       setSuccessMessage(`Successfully ${isEditMode ? "updated" : "created"} the collection with ID: ${updatedCollection.id}`);
       setNewCollectionId(collectionId);
+      navigate("/success", {
+        state: {
+          successMessage: `Successfully ${isEditMode ? "updated" : "created"} collection ${collectionId}.`,
+          isNewItem: !isEditMode,
+          collectionId: updatedCollection.id,
+          mode: isJsonMode ? "json" : "form",
+        },
+      });
       reload();
     } catch (error: unknown) {
       const apiError = error as ApiError;
+
+      // Handle error details thoroughly
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isEditMode ? "editing" : "creating";
 
         if (errorDetails.code && errorDetails.description) {
-          setErrorMessage (
+          setErrorMessage(
             <Box>
-              <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.description) ? (
                   errorDetails.description.map((desc: { msg: string }) => (
-                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>
-                      {desc.msg}
-                    </Text>
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{desc.msg}</Text>
                   ))
                 ) : (
                   <Text>{errorDetails.description}</Text>
@@ -122,8 +151,24 @@ function CollectionForm() {
               </Box>
             </Box>
           );
+        } else if (errorDetails.detail && errorDetails.errors) {
+          setErrorMessage(
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.errors) ? (
+                  errorDetails.errors.map((err: { msg: string }) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{err.msg}</Text>
+                  ))
+                ) : (
+                  <Text>{errorDetails.errors}</Text>
+                )}
+              </Box>
+            </Box>
+          );
         } else if (errorDetails.detail) {
-          setErrorMessage (
+          setErrorMessage(
             <Box>
               <Text fontWeight="bold">
                 Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.
@@ -134,11 +179,12 @@ function CollectionForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
-      } 
+      } else {
+        // If the API returns error in another format
+        setErrorMessage("Unknown error occurred. Please try again.");
+      }
     }
   };
-    
-  
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newJson = e.target.value;
@@ -146,7 +192,7 @@ function CollectionForm() {
 
     try {
       const parsedData = JSON.parse(newJson);
-      Object.keys(parsedData).forEach(key => {
+      Object.keys(parsedData).forEach((key) => {
         setValue(key as keyof FormValues, parsedData[key]);
       });
       setJsonError("");
@@ -193,10 +239,7 @@ function CollectionForm() {
                     {newCollectionId}
                   </RouterLink>.
                   <Box mt="2">
-                    <Button
-                      variant="link"
-                      onClick={() => window.location.reload()}
-                    >
+                    <Button variant="link" onClick={() => window.location.reload()}>
                       Create another collection
                     </Button>
                   </Box>
@@ -207,7 +250,6 @@ function CollectionForm() {
           <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
         </Alert>
       )}
-
 
       {errorMessage && (
         <Alert status="error" mb={4}>
@@ -239,22 +281,54 @@ function CollectionForm() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)}>
           {!isEditMode && (
-            <TextInput
-              label="ID"
-              error={errors.id}
-              {...register("id", { required: "Enter a collection ID." })}
-            />
+            <TextInput label="ID" error={errors.id} {...register("id", { required: "Enter a collection ID." })} />
           )}
-          <TextInput
-            label="Title"
-            error={errors.title}
-            {...register("title")}
-          />
-          <TextAreaInput
-            label="Description"
-            error={errors.description}
-            {...register("description", { required: "Enter a collection description." })}
-          />
+          <TextInput label="Title" error={errors.title} {...register("title")} />
+          <TextAreaInput label="Description" error={errors.description} {...register("description", { required: "Enter a collection description." })} />
+
+          {/* Bounding Box fields */}
+          <Box>
+            <Text mt="4">Bounding Box</Text>
+            <Box display="flex" gap="2">
+              <Box>
+                <Text>Min X</Text>
+                <Input {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })} />
+              </Box>
+              <Box>
+                <Text>Min Y</Text>
+                <Input {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })} />
+              </Box>
+              <Box>
+                <Text>Max X</Text>
+                <Input {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })} />
+              </Box>
+              <Box>
+                <Text>Max Y</Text>
+                <Input {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })} />
+              </Box>
+            </Box>
+            {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
+          </Box>
+
+          {/* Temporal Extent fields */}
+          <Box>
+            <Text mt="4">Temporal Extent</Text>
+            <Box display="flex" gap="4">
+              <DateTimeInput
+                label="Date/time from"
+                {...register("extent.temporal.interval[0][0]", {
+                  setValueAs: handleRangeUpdate
+                })}
+              />
+              <DateTimeInput
+                label="Date/time to"
+                {...register("extent.temporal.interval[0][1]", {
+                  setValueAs: handleRangeUpdate
+                })}
+              />
+            </Box>
+            {errors.extent?.temporal && <Text color="red.500">Both start and end dates are required.</Text>}
+          </Box>
 
           {/* License dropdown */}
           <Box>
@@ -281,12 +355,7 @@ function CollectionForm() {
           <Controller
             name="keywords"
             render={({ field }) => (
-              <ArrayInput
-                label="Keywords"
-                error={errors.keywords}
-                helper="Enter a comma-separated list of keywords."
-                {...field}
-              />
+              <ArrayInput label="Keywords" error={errors.keywords} helper="Enter a comma-separated list of keywords." {...field} />
             )}
             control={control}
           />
@@ -305,19 +374,13 @@ function CollectionForm() {
                 </Tr>
               </Thead>
               <Tbody>
-                {fields.map(({ id }, idx: number) => (
-                  <Tr key={id}>
+                {fields.map((field, idx: number) => (
+                  <Tr key={field.id || idx}> {/* Using 'field.id' or a unique identifier if available */}
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.name`)}
-                        aria-labelledby="provider_name"
-                      />
+                      <Input {...register(`providers.${idx}.name`)} aria-labelledby="provider_name" />
                     </Td>
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.description`)}
-                        aria-labelledby="provider_description"
-                      />
+                      <Input {...register(`providers.${idx}.description`)} aria-labelledby="provider_description" />
                     </Td>
                     <Td>
                       <Controller
@@ -329,7 +392,7 @@ function CollectionForm() {
                               { value: "licensor", label: "Licensor" },
                               { value: "producer", label: "Producer" },
                               { value: "processor", label: "Processor" },
-                              { value: "host", label: "Host" }
+                              { value: "host", label: "Host" },
                             ]}
                             {...field}
                           />
@@ -338,10 +401,7 @@ function CollectionForm() {
                       />
                     </Td>
                     <Td>
-                      <Input
-                        {...register(`providers.${idx}.url`)}
-                        aria-labelledby="provider_url"
-                      />
+                      <Input {...register(`providers.${idx}.url`)} aria-labelledby="provider_url" />
                     </Td>
                     <Td>
                       <IconButton
@@ -357,12 +417,7 @@ function CollectionForm() {
               </Tbody>
             </Table>
             <Box textAlign="right" mt="2">
-              <Button
-                type="button"
-                variant="link"
-                leftIcon={<MdAdd />}
-                onClick={() => append({ name: "" })}
-              >
+              <Button type="button" variant="link" leftIcon={<MdAdd />} onClick={() => append({ name: "" })}>
                 Add provider
               </Button>
             </Box>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { useParams, Link as RouterLink } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useItem, useCollections } from "@developmentseed/stac-react";
 import {
   Box,
@@ -43,10 +43,10 @@ import {
   DateTimeInput,
 } from "../../components/forms";
 
-// Custom error types
 interface ApiErrorDetail {
   code?: string;
   description?: string | { msg: string }[];
+  errors?: string | { msg: string }[];
   detail?: string;
 }
 
@@ -87,7 +87,7 @@ const defaultValues: FormValues = {
       ],
     ],
   },
-  bbox: [0, 0, 10, 10],
+  bbox: [0, 0, 0, 0],
   properties: {
     title: "",
     description: "",
@@ -116,21 +116,26 @@ const defaultValues: FormValues = {
 export default function ItemForm() {
   const { collectionId, itemId } = useParams();
   const isNewItem = !itemId;
+  const navigate = useNavigate();
+  const location = useLocation();
 
   usePageTitle(isNewItem ? "Add New Item" : `Edit item ${itemId}`);
-
-  const itemResource = isNewItem
-    ? ""
-    : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`;
-
-  const { item, state, reload } = useItem(itemResource);
-  const { update, state: updateState } = useUpdateItem(itemResource);
+  const { item, state, reload } = useItem(
+    isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
+  );
+  const { update, state: updateState } = useUpdateItem(
+    isNewItem ? "" : `${process.env.REACT_APP_STAC_API}/collections/${collectionId}/items/${itemId}`
+  );
   const { collections } = useCollections();
 
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    collectionId || ""
-  );
+  useEffect(() => {
+    if (location.state?.resetForm) {
+      setJsonMode(location.state.lastMode === "json");
+    }
+  }, [location.state]);
 
+
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(collectionId || "");
   const [isJsonMode, setJsonMode] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
@@ -176,22 +181,45 @@ export default function ItemForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  const handleRangeUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.datetime", null);
+      return v.endsWith("Z") ? v : `${v}:00Z`;
+    }
+    return v;
+  };
+  
+  const handleSingleDateUpdate = (v?: string) => {
+    if (v) {
+      setValue("properties.start_datetime", undefined);
+      setValue("properties.end_datetime", undefined);
+      return v.endsWith("Z") ? v : `${v}:00Z`;
+    }
+    return null;
+  };
+  
+
+
+  useEffect(() => {
+    if (!item || isNewItem) return;
+
+    const { start_datetime, end_datetime, datetime } = item.properties;
+    if (start_datetime && end_datetime) {
+      setDateType("range");
+      setValue("properties.start_datetime", start_datetime.split("Z")[0]);
+      setValue("properties.end_datetime", end_datetime.split("Z")[0]);
+    } else {
+      setDateType("single");
+      setValue("properties.datetime", datetime.split("Z")[0]);
+    }
+  }, [item, setValue, isNewItem]);
+
   const onSubmit = async (data: FormValues) => {
     setSuccessMessage("");
     setErrorMessage("");
 
-    if (data.properties.datetime && !data.properties.datetime.endsWith("Z")) {
-      data.properties.datetime += "Z";
-    }
-    if (data.properties.start_datetime && !data.properties.start_datetime.endsWith("Z")) {
-      data.properties.start_datetime += "Z";
-    }
-    if (data.properties.end_datetime && !data.properties.end_datetime.endsWith("Z")) {
-      data.properties.end_datetime += "Z";
-    }
     const itemId = data.id;
     try {
-      let message;
       if (isNewItem) {
         const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
 
@@ -200,20 +228,32 @@ export default function ItemForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        message = `Successfully created the new item in collection ${selectedCollectionId}.`;
+        navigate("/success", {
+          state: {
+            successMessage: `Successfully created the new item in collection ${selectedCollectionId}.`,
+            isNewItem: true,
+            selectedCollectionId,
+            mode: isJsonMode ? "json" : "form",
+          },
+        });
       } else {
         const coercedData = data as StacItem;
-        await update(coercedData);  
-        message = `Successfully updated the item ${itemId}.`;
+        await update(coercedData); 
+        navigate("/success", {
+          state: {
+            successMessage: `Successfully updated the item ${itemId}.`,
+            isNewItem: false,
+            collectionId,
+            mode: isJsonMode ? "json" : "form",
+          },
+        });
       }
-      setSuccessMessage(String(message));
       reload();
-    } catch (error: unknown) {
+    } catch (error) {
       const apiError = error as ApiError;
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isNewItem ? "creating" : "editing";
-
         if (errorDetails.code && errorDetails.description) {
           setErrorMessage (
             <Box>
@@ -232,6 +272,22 @@ export default function ItemForm() {
               </Box>
             </Box>
           );
+        } else if (errorDetails.detail && errorDetails.errors) {
+          setErrorMessage(
+            <Box>
+              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Description: Validation failed for item with ID {itemId || "Unknown"} while {action} it.</Text>
+              <Box as="ul" pl={5}>
+                {Array.isArray(errorDetails.errors) ? (
+                  errorDetails.errors.map((err: { msg: string }) => (
+                    <Text as="li" key={Math.random().toString(36).substr(2, 9)}>{err.msg}</Text>
+                  ))
+                ) : (
+                  <Text>{errorDetails.errors}</Text>
+                )}
+              </Box>
+            </Box>
+          );
         } else if (errorDetails.detail) {
           setErrorMessage (
             <Box>
@@ -244,6 +300,8 @@ export default function ItemForm() {
         } else {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
+      } else {
+        setErrorMessage("Unknown error occurred. Please try again.");
       }
     }
   };
@@ -257,6 +315,8 @@ export default function ItemForm() {
       Object.keys(parsedData).forEach((key) => {
         setValue(key as keyof FormValues, parsedData[key]);
       });
+      setSelectedCollectionId(parsedData.collection || "");
+      setValue("properties.license", parsedData.properties?.license || "");
       setJsonError("");
     } catch (error) {
       setJsonError("Invalid JSON format");
@@ -267,22 +327,11 @@ export default function ItemForm() {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
       setJsonInput(JSON.stringify({ ...watchedValues }, null, 2));
+    }else {
+      setSelectedCollectionId(watchedValues.collection || "");
+      setValue("properties.license", watchedValues.properties?.license || "");
     }
   };
-
-  useEffect(() => {
-    if (!item || isNewItem) return;
-
-    const { start_datetime, end_datetime, datetime } = item.properties;
-    if (start_datetime && end_datetime) {
-      setDateType("range");
-      setValue("properties.start_datetime", start_datetime.split("Z")[0]);
-      setValue("properties.end_datetime", end_datetime.split("Z")[0]);
-    } else {
-      setDateType("single");
-      setValue("properties.datetime", datetime.split("Z")[0]);
-    }
-  }, [item, setValue, isNewItem]);
 
   const [dateType, setDateType] = useState<string>();
 
@@ -304,27 +353,15 @@ export default function ItemForm() {
           <Box flex="1">
             <AlertTitle>Success!</AlertTitle>
             <AlertDescription>
-              {isNewItem ? (
-                <>
-                  {successMessage}{" "}
-                  <RouterLink to={`/collections/${selectedCollectionId}/`}>View Item</RouterLink>
-                  <Box mt="2">
-                    <Button
-                      variant="link"
-                      onClick={() => window.location.reload()}
-                    >
-                      Create another item
-                    </Button>
-                  </Box>
-                </>
-              ) : (
-                <>
-                  {successMessage}{" "}
-                  <RouterLink to={`/collections/${collectionId}`}>
-                    View updated item
-                  </RouterLink>
-                </>
-              )}
+              {successMessage}{" "}
+              <Box mt="2">
+                <Button
+                  variant="link"
+                  onClick={() => window.location.reload()}
+                >
+                  Create another item
+                </Button>
+              </Box>
             </AlertDescription>
           </Box>
           <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSuccessMessage("")} />
@@ -419,10 +456,12 @@ export default function ItemForm() {
               aria-hidden={dateType !== "single"}
               display={dateType === "single" ? "block" : "none"}
             >
-              <DateTimeInput
+              <DateTimeInput  
                 label="Enter date"
                 error={errors.properties?.datetime}
-                {...register("properties.datetime")}
+                {...register("properties.datetime", {
+                  setValueAs: handleSingleDateUpdate
+                })}
               />
             </Box>
             <Box
@@ -433,15 +472,49 @@ export default function ItemForm() {
               <DateTimeInput
                 label="Date/time from"
                 error={errors.properties?.start_datetime}
-                {...register("properties.start_datetime")}
+                {...register("properties.start_datetime", {
+                  setValueAs: handleRangeUpdate
+                })}
               />
               <DateTimeInput
                 label="Date/time to"
                 error={errors.properties?.end_datetime}
-                {...register("properties.end_datetime")}
+                {...register("properties.end_datetime", {
+                  setValueAs: handleRangeUpdate
+                })}
               />
             </Box>
           </fieldset>
+          
+                 
+          {/* BBox Input */}
+          <Box mt={4}>
+            <Text as="h2" fontWeight="bold">
+              Bounding Box (Bbox)
+            </Text>
+            <Box display="flex" gap="4" mt="2">
+              <NumberInput
+                label="Min X"
+                error={errors.bbox?.[0]}
+                {...register("bbox.0", { required: "Min X is required" })}
+              />
+              <NumberInput
+                label="Min Y"
+                error={errors.bbox?.[1]}
+                {...register("bbox.1", { required: "Min Y is required" })}
+              />
+              <NumberInput
+                label="Max X"
+                error={errors.bbox?.[2]}
+                {...register("bbox.2", { required: "Max X is required" })}
+              />
+              <NumberInput
+                label="Max Y"
+                error={errors.bbox?.[3]}
+                {...register("bbox.3", { required: "Max Y is required" })}
+              />
+            </Box>
+          </Box>
 
           <fieldset>
             <legend>Providers</legend>
