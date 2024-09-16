@@ -63,7 +63,7 @@ export const Login = () => {
               rounded="full"
               w="300px"
               onClick={() => {
-                console.log("Sign in clicked");
+                // console.log("Sign in clicked");
                 auth.signinRedirect();
               }}
             >

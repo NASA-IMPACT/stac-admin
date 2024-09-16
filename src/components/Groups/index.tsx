@@ -28,6 +28,15 @@ import { useApi } from "../../hooks/useApi";
 import { decodeToken } from "../../lib/util";
 import { CreateGroupModal } from "./CreateGroupModal";
 
+interface Group {
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
+  your_role: string;
+  num_members: number;
+}
+
 export const Groups = () => {
   const [search, setSearch] = useState("");
   const createGroupModal = useDisclosure();
@@ -37,11 +46,11 @@ export const Groups = () => {
   const userGroups = useApi(
     `${BACKEND_URL}/api/v1/group-management/users/${userInfo?.email}/group-memberships?client_id=${CLIENT_ID}`
   );
-  let filteredGroups = [];
+  let filteredGroups: Group[] = [];
 
   if (!userGroups.isPending && userGroups.data) {
     const lowerSearch = search.toLowerCase();
-    filteredGroups = userGroups?.data?.groups?.filter((group: any) => {
+    filteredGroups = userGroups?.data?.groups?.filter((group: Group) => {
       return (
         group.name?.toLowerCase().includes(lowerSearch) ||
         group.description?.toLowerCase().includes(lowerSearch) ||
@@ -108,7 +117,7 @@ export const Groups = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {filteredGroups?.map((group: any) => {
+            {filteredGroups?.map((group: Group) => {
               return (
                 <Tr key={group.id}>
                   <Td>

@@ -56,7 +56,7 @@ export const CreateGroupModal = ({ isOpen, onClose, auth }: { isOpen: boolean; o
         navigate(0);
       })
       .catch((err) => {
-        console.log(err);
+        // console.log(err);
         toast({
           title: "An error occurred",
           description: err.response?.data?.message || "Please try again later",

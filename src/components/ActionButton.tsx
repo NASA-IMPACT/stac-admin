@@ -1,8 +1,10 @@
 import { Icon, Button } from "@chakra-ui/react";
+import { IconType } from "react-icons";
+
 interface ActionButtonProps {
   onClick: () => void;
   children: React.ReactNode;
-  icon?: any;
+  icon?: IconType;
   size?: string;
   isDisabled?: boolean;
 }

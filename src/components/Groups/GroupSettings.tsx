@@ -29,6 +29,7 @@ import { useAuth } from "react-oidc-context";
 import { Group, Member } from "../../interfaces/Groups";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useCallback } from "react";
 
 interface GroupSettingsProps {
   groupId: string | undefined;
@@ -57,7 +58,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   const toast = useToast();
   const navigate = useNavigate();
 
-  const customFetch = async (url: string, options?: RequestInit) => {
+  const customFetch = useCallback(async (url: string, options?: RequestInit) => {
     const resp = await fetch(url, {
       ...options,
       headers: {
@@ -69,12 +70,11 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
     const data = await resp.json();
 
     return data;
-  };
+  }, [auth?.user?.access_token]);
 
   useEffect(() => {
     (async () => {
       const groupBasicInfo: Group = await customFetch(`${BACKEND_URL}/api/v1/group-management/groups/${groupId}`);
-      console.log(groupBasicInfo);
       setName(groupBasicInfo.name);
       setDescription(groupBasicInfo.description);
       setOwner(groupBasicInfo.owner_id);
@@ -84,7 +84,8 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
       const groupManagers = groupMembers.profiles.filter((member: Member) => member.membership_type === "ADMIN");
       setGroupManagers(groupManagers);
     })();
-  }, [groupId]);
+  }, [groupId, customFetch]);
+
 
   return (
     <>

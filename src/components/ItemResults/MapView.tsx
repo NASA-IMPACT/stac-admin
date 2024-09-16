@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box } from "@chakra-ui/react";
-import Map, {  type MapRef, type MapLayerMouseEvent, Source, Layer } from "react-map-gl/maplibre";
+import Map, { type MapRef, type MapLayerMouseEvent, Source, Layer } from "react-map-gl/maplibre";
 import { StacItem } from "stac-ts";
 import getBbox from "@turf/bbox";
 import { BackgroundTiles } from "../Map";
 
+// Define a type for the highlight filter expression
+type HighlightFilterType = ["==", ["get", string], string];
+
 type MapViewProps = {
   results?: {
     type: "FeatureCollection";
-    features: StacItem[]
+    features: StacItem[];
   };
   highlightItem?: string;
   setHighlightItem: (id?: string) => void;
   id: string;
   hidden: boolean;
-}
+};
 
 const resultsOutline = {
   "line-color": "#C53030",
@@ -23,19 +26,23 @@ const resultsOutline = {
 
 const resultsFill = {
   "fill-color": "#C53030",
-  "fill-opacity": 0.1
+  "fill-opacity": 0.1,
 };
 
 const resultsHighlight = {
   "fill-color": "#F6E05E",
-  "fill-opacity": .7
+  "fill-opacity": 0.7,
 };
 
 function MapView({ id, hidden, results, highlightItem, setHighlightItem }: MapViewProps) {
-  const [ map, setMap ] = useState<MapRef>();
+  const [map, setMap] = useState<MapRef>();
   const setMapRef = (m: MapRef) => setMap(m);
-  const highlightFilter = useMemo(() => ["==", ["get", "id"], highlightItem || ""], [highlightItem]);
 
+  // Use the defined type for highlightFilter
+  const highlightFilter: HighlightFilterType = useMemo(
+    () => ["==", ["get", "id"], highlightItem || ""],
+    [highlightItem]
+  );
 
   // MapLibre doesn't preserve IDs so we're adding the ID
   // to the properties so we can identify the items for user interactions.
@@ -43,7 +50,7 @@ function MapView({ id, hidden, results, highlightItem, setHighlightItem }: MapVi
     if (!results?.features) return null;
     return {
       ...results,
-      features: results.features.map(addIdToProperties)
+      features: results.features.map(addIdToProperties),
     };
   }, [results]);
 
@@ -59,13 +66,15 @@ function MapView({ id, hidden, results, highlightItem, setHighlightItem }: MapVi
     }
   }, [hidden, map, results]);
 
-
-  const handleHover = useCallback((e: MapLayerMouseEvent) => {
-    const interactiveItem = e.features && e.features[0];
-    if(interactiveItem) {
-      setHighlightItem(interactiveItem.properties?.id);
-    }
-  }, [setHighlightItem]);
+  const handleHover = useCallback(
+    (e: MapLayerMouseEvent) => {
+      const interactiveItem = e.features && e.features[0];
+      if (interactiveItem) {
+        setHighlightItem(interactiveItem.properties?.id);
+      }
+    },
+    [setHighlightItem]
+  );
 
   return (
     <Box
@@ -84,15 +93,11 @@ function MapView({ id, hidden, results, highlightItem, setHighlightItem }: MapVi
         interactiveLayerIds={["results-fill"]}
       >
         <BackgroundTiles />
-        { results && (
-          <Source
-            id="results"
-            type="geojson"
-            data={resultsWithIDs}
-          >
+        {results && (
+          <Source id="results" type="geojson" data={resultsWithIDs}>
             <Layer id="results-line" type="line" paint={resultsOutline} />
             <Layer id="results-fill" type="fill" paint={resultsFill} />
-            <Layer id="results-hover" type="fill" paint={resultsHighlight} filter={highlightFilter as any} />
+            <Layer id="results-hover" type="fill" paint={resultsHighlight} filter={highlightFilter} />
           </Source>
         )}
       </Map>
@@ -107,8 +112,8 @@ const addIdToProperties = (feature: StacItem) => {
     ...feature,
     properties: {
       ...feature.properties,
-      id: feature.id
-    }
+      id: feature.id,
+    },
   };
 };
 
