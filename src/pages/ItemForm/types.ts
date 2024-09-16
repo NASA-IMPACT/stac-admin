@@ -1,12 +1,4 @@
-import { StacAsset, StacExtensions, StacLink, StacProvider, StacVersion } from "stac-ts";
-import { GeoJSONGeometryCollection,
-  GeoJSONLineString,
-  GeoJSONMultiLineString,
-  GeoJSONMultiPoint,
-  GeoJSONMultiPolygon,
-  GeoJSONPoint,
-  GeoJSONPolygon
-} from "stac-ts/src/types/geojson";
+import { StacExtensions, StacVersion } from "stac-ts";
 
 export type FormValues = {
   id: string;
@@ -14,30 +6,43 @@ export type FormValues = {
   stac_version: StacVersion;
   stac_extensions?: StacExtensions;
   collection?: string;
-  links: StacLink[];
-  assets: { [k: string]: StacAsset };
+  links: Array<{
+    href?: string;
+    rel?: string;
+    type?: string;
+    title?: string;
+    [key: string]: any;
+  }>;
+  assets: { [k: string]: { [key: string]: any } };
   geometry:
-  | null
-  | GeoJSONPoint
-  | GeoJSONLineString
-  | GeoJSONPolygon
-  | GeoJSONMultiPoint
-  | GeoJSONMultiLineString
-  | GeoJSONMultiPolygon
-  | GeoJSONGeometryCollection;
+    | {
+        type: string;
+        coordinates: any;
+        bbox?: number[];
+        [key: string]: any;
+      }
+    | null;
   bbox?: number[];
   properties: {
     title: string;
     description: string;
     license: string;
-    providers: StacProvider[];
+    providers: Array<{
+      name?: string;
+      description?: string;
+      roles?: string[];
+      url?: string;
+      [key: string]: any;
+    }>;
     platform: string;
     constellation: string;
     mission: string;
     gsd: number;
-    instrument: string[];
+    instruments: string[];
     datetime: string | null;
     start_datetime?: string;
     end_datetime?: string;
+    created?: string;
+    updated?: string;
   }
 }
