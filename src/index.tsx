@@ -31,7 +31,7 @@ const theme = extendTheme({
 let theOidcConfig;
 let redirect_uri: string;
 
-if (process.env.REACT_APP_NODE_ENV === "development") {
+if (!process.env.REACT_APP_NODE_ENV || process.env.REACT_APP_NODE_ENV === "development") {
   theOidcConfig = localOidcConfig;
   redirect_uri = "http://localhost:5173/oauth-callback";
 } else {
