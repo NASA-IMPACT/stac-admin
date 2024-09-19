@@ -26,8 +26,8 @@ getOidcConfig().then(oidcConfig => {
   const theConfig: AuthProviderProps = {
     authority: `${authority}`,
     client_id: process.env.REACT_APP_KEYCLOAK_CLIENT_ID || "",
-    redirect_uri: "https://dojxsily14em4.cloudfront.net",
-    // redirect_uri: "http://localhost:3000",
+    // redirect_uri: "https://dojxsily14em4.cloudfront.net",
+    redirect_uri: "http://localhost:3000",
     response_type: "code",
     scope: "openid email",
     metadata: {
