@@ -8,6 +8,11 @@ import {
   Box,
   Button,
   Container,
+  Image,
+  VStack,
+  Heading,
+  Text,
+  Divider,
 } from "@chakra-ui/react";
 import { ArrowRightIcon } from "@chakra-ui/icons";
 import { useAuth } from "react-oidc-context";
@@ -26,6 +31,9 @@ import WorkflowPage from "./pages/Workflows/WorkflowPage";
 import SuccessPage from "./pages/successPage";
 import SorryPage from "./pages/sorryPage";
 import ErrorBoundary from "./components/ErrorBoundary";
+import backgroundImage from "./Images/background_image.png";
+import loginIcon from "./Images/login_icon.png";
+import nasaLogo from "./Images/NASA.svg"; // Import NASA logo SVG
 
 export const App = () => {
   const workflowsEnabled = process.env.REACT_APP_WORKFLOWS === "True";
@@ -92,13 +100,63 @@ export const App = () => {
               }
               {
                 !auth.isAuthenticated && (!(auth.isLoading || auth.error) ) &&(
-                  <Button
-                    type="submit"
-                    onClick={() => auth.signinRedirect()}
-                    rightIcon={<ArrowRightIcon />}
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
+                    minHeight="96vh"
+                    bgImage={`url(${backgroundImage})`}
+                    bgSize="cover"
+                    bgPosition="center"
+                    color="black"
+                    textAlign="center"
                   >
-                    Log in
-                  </Button>
+                    <VStack
+                      spacing={8}
+                      bg="white" // Change background to white
+                      p={8}
+                      borderRadius="md"
+                      boxShadow="xl"
+                      maxW="lg"
+                      width="100%"
+                      color="black" // Set text color to black
+                    >
+                      <Image src={nasaLogo} alt="Login Icon" boxSize="100px" />
+                      <Heading size="2xl" color="black"> {/* Change text color */}
+                        Welcome to STAC Admin
+                      </Heading>
+                      <Text fontSize="xl" maxW="sm" color="black"> {/* Change text color */}
+                        Manage your spatial datasets efficiently.
+                      </Text>
+                      <Divider borderColor="gray.500" />
+                      <Button
+                        type="submit"
+                        onClick={() => auth.signinRedirect()}
+                        rightIcon={<ArrowRightIcon />}
+                        size="lg"
+                        colorScheme="gray"
+                        variant="solid"
+                        boxShadow="md"
+                        _hover={{ boxShadow: "xl", transform: "scale(1.05)" }}
+                        px={10}
+                        py={8}
+                        fontSize="2xl"
+                        height="80px"
+                        width="300px"
+                        bg="#abb1ba" // Use a gray color for the button
+                        color="white" // Button text color
+                      >
+                        <Image
+                          src={loginIcon}
+                          alt="Login Icon"
+                          boxSize="40px" 
+                          mr={4} 
+                        />
+                        Log in
+                      </Button>
+                    </VStack>
+                  </Box>
                 )
               }
             </Container>
