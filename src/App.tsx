@@ -49,7 +49,7 @@ export const App = () => {
       <StacApiProvider apiUrl={apiUrl}>
         <Router>
           <ErrorBoundary>
-            <Container height="100vh" mx="auto" p="5" bgColor="white" boxShadow="md">
+            <Container mx="auto" p="5" bgColor="white" boxShadow="md">
               {
 
                 auth.isLoading &&
