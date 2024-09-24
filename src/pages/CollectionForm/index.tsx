@@ -161,7 +161,7 @@ function CollectionForm() {
         } else if (errorDetails.detail && errorDetails.errors) {
           setErrorMessage(
             <Box>
-              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Detail: {errorDetails.detail || "Unknown Error"}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.errors) ? (
