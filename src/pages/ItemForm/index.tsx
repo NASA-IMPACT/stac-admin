@@ -344,7 +344,12 @@ export default function ItemForm() {
     try {
       const parsedData = JSON.parse(newJson);
       Object.keys(parsedData).forEach((key) => {
-        setValue(key as keyof FormValues, parsedData[key]);
+        if (key === "bbox") {
+          // Convert bbox values to numbers
+          setValue(key as keyof FormValues, parsedData[key].map((val: string) => parseFloat(val)));
+        } else {
+          setValue(key as keyof FormValues, parsedData[key]);
+        }
       });
       setSelectedCollectionId(parsedData.collection || "");
       setValue("properties.license", parsedData.properties?.license || "");
@@ -496,10 +501,10 @@ export default function ItemForm() {
               Bounding Box (Bbox)
             </Text>
             <Box display="flex" gap="4" mt="2">
-              <NumberInput label="Min X" error={errors.bbox?.[0]} {...register("bbox.0", { required: "Min X is required" })} />
-              <NumberInput label="Min Y" error={errors.bbox?.[1]} {...register("bbox.1", { required: "Min Y is required" })} />
-              <NumberInput label="Max X" error={errors.bbox?.[2]} {...register("bbox.2", { required: "Max X is required" })} />
-              <NumberInput label="Max Y" error={errors.bbox?.[3]} {...register("bbox.3", { required: "Max Y is required" })} />
+              <NumberInput label="Min X" error={errors.bbox?.[0]} {...register("bbox.0", { required: "Min X is required", setValueAs: (v) => parseFloat(v) })} />
+              <NumberInput label="Min Y" error={errors.bbox?.[1]} {...register("bbox.1", { required: "Min Y is required", setValueAs: (v) => parseFloat(v) })} />
+              <NumberInput label="Max X" error={errors.bbox?.[2]} {...register("bbox.2", { required: "Max X is required", setValueAs: (v) => parseFloat(v) })} />
+              <NumberInput label="Max Y" error={errors.bbox?.[3]} {...register("bbox.3", { required: "Max Y is required", setValueAs: (v) => parseFloat(v) })} />
             </Box>
           </Box>
 
