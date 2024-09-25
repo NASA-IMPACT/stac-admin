@@ -298,19 +298,39 @@ function CollectionForm() {
             <Box display="flex" gap="2">
               <Box>
                 <Text>Min X</Text>
-                <Input {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][0]", {
+                    required: "Min X is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Min Y</Text>
-                <Input {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][1]", {
+                    required: "Min Y is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Max X</Text>
-                <Input {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][2]", {
+                    required: "Max X is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Max Y</Text>
-                <Input {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][3]", {
+                    required: "Max Y is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
             </Box>
             {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
