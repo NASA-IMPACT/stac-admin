@@ -54,27 +54,15 @@ interface ApiError extends Error {
   detail?: ApiErrorDetail;
 }
 
+// Define default values with necessary adjustments
 const defaultValues: FormValues = {
   id: "",
   type: "Feature",
   stac_version: "1.0.0",
-  stac_extensions: ["https://example.com/extension"],
+  stac_extensions: [],
   collection: "",
-  links: [
-    {
-      href: "string",
-      rel: "string",
-      type: "image/tiff; application=geotiff",
-      title: "string",
-    },
-  ],
-  assets: {
-    thumbnail: {
-      href: "https://example.com/thumbnail.png",
-      title: "Thumbnail",
-      type: "image/png",
-    },
-  },
+  links: [],
+  assets: {},
   geometry: {
     type: "Polygon",
     coordinates: [
@@ -105,11 +93,11 @@ const defaultValues: FormValues = {
     mission: "",
     gsd: 1,
     instruments: [],
-    datetime: "2024-08-26T22:12:31.927Z",
-    start_datetime: "2024-08-26T22:12:31.927Z",
-    end_datetime: "2024-08-26T22:12:31.927Z",
-    created: "2024-08-26T22:12:31.927Z",
-    updated: "2024-08-26T22:12:31.927Z",
+    datetime: null,
+    start_datetime: "",
+    end_datetime: "",
+    created: "",
+    updated: "",
   },
 };
 
@@ -234,6 +222,34 @@ export default function ItemForm() {
     }
   }, [item, setValue, isNewItem]);
 
+  // Function to generate the links dynamically based on form values
+  const generateLinks = (data: FormValues) => {
+    return [
+      {
+        rel: "collection",
+        type: "application/json",
+        href: `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}`
+      },
+      {
+        rel: "parent",
+        type: "application/json",
+        href: `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}`
+      },
+      {
+        rel: "root",
+        type: "application/json",
+        href: `${process.env.REACT_APP_STAC_API}/`
+      },
+      {
+        rel: "self",
+        type: "application/geo+json",
+        href: `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items/${data.id}`
+      }
+    ];
+  };
+
+  const currentDate = new Date().toISOString();
+
   const onSubmit = async (data: FormValues) => {
     setSuccessMessage("");
     setErrorMessage("");
@@ -241,15 +257,17 @@ export default function ItemForm() {
     // Format datetime fields for submission
     const formattedData = {
       ...data,
+      links: generateLinks(data), // Add dynamically generated links
       properties: {
         ...data.properties,
+        created: isNewItem ? currentDate : data.properties.created, // Set 'created' only if it's a new item
+        updated: currentDate, // Always set 'updated' to the current date
         datetime: data.properties.datetime ? formatDatetime(data.properties.datetime) : null,
         start_datetime: data.properties.start_datetime ? formatDatetime(data.properties.start_datetime) : null,
         end_datetime: data.properties.end_datetime ? formatDatetime(data.properties.end_datetime) : null,
       },
     };
 
-    const itemId = formattedData.id;
     try {
       if (isNewItem) {
         const postUrl = `${process.env.REACT_APP_STAC_API}/collections/${selectedCollectionId}/items`;
@@ -272,7 +290,7 @@ export default function ItemForm() {
         await update(coercedData);
         navigate("/success", {
           state: {
-            successMessage: `Successfully updated the item ${itemId}.`,
+            successMessage: `Successfully updated the item ${data.id}.`,
             isNewItem: false,
             collectionId,
             mode: isJsonMode ? "json" : "form",
@@ -289,7 +307,7 @@ export default function ItemForm() {
           setErrorMessage(
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.code}</Text>
-              <Text fontWeight="bold">Description: Validation failed for item with ID {itemId || "Unknown"} while {action} it.</Text>
+              <Text fontWeight="bold">Description: Validation failed for item with ID {data.id || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.description) ? (
                   errorDetails.description.map((desc: { msg: string }) => (
@@ -307,7 +325,7 @@ export default function ItemForm() {
           setErrorMessage(
             <Box>
               <Text fontWeight="bold">Detail: {errorDetails.detail || "Unknown Error"}</Text>
-              <Text fontWeight="bold">Description: Validation failed for item with ID {itemId || "Unknown"} while {action} it.</Text>
+              <Text fontWeight="bold">Description: Validation failed for item with ID {data.id || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.errors) ? (
                   errorDetails.errors.map((err: { msg: string }) => (
@@ -323,7 +341,7 @@ export default function ItemForm() {
           setErrorMessage(
             <Box>
               <Text fontWeight="bold">
-                Validation failed for item with ID {itemId || "Unknown"} while {action} it.
+                Validation failed for item with ID {data.id || "Unknown"} while {action} it.
               </Text>
               <Text>{errorDetails.detail}</Text>
             </Box>
@@ -362,7 +380,9 @@ export default function ItemForm() {
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
-      setJsonInput(JSON.stringify({ ...watchedValues }, null, 2));
+      // Include dynamically generated links in JSON before switching to JSON mode
+      const updatedJson = JSON.stringify({ ...watchedValues, links: generateLinks(watchedValues) }, null, 2);
+      setJsonInput(updatedJson);
     } else {
       setSelectedCollectionId(watchedValues.collection || "");
       setValue("properties.license", watchedValues.properties?.license || "");
