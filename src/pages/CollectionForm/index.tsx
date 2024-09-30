@@ -64,7 +64,7 @@ function CollectionForm() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | JSX.Element>("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [newCollectionId, setNewCollectionId] = useState<string | null>(null); // New state to store the new collection ID
+  const [newCollectionId, setNewCollectionId] = useState<string | null>(null);
 
   const { control, register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormValues>({
     defaultValues: isEditMode ? collection : defaultData,
@@ -93,20 +93,28 @@ function CollectionForm() {
     }
   }, [watchedValues, isJsonMode]);
 
+  // Function to update date format to the desired format "YYYY-MM-DDTHH:MM:SSZ"
   const handleRangeUpdate = (v?: string) => {
-    if (v) {
-      return v.endsWith("Z") ? v : `${v}:00Z`;
+    if (!v) return v;
+    
+    const date = new Date(v);
+    
+    // Check if the input is a valid date
+    if (isNaN(date.getTime())) {
+      return v; // Return the original input if it's not a valid date
     }
-    return v;
+    
+    // Convert to ISO string and remove the milliseconds part
+    return date.toISOString().split(".")[0] + "Z";
   };
 
   useEffect(() => {
     if (!collection || isEditMode) return;
 
-    const { start_datetime, end_datetime } = collection.extent.temporal.interval;
+    const { start_datetime, end_datetime } = collection.extent.temporal.interval[0] || {};
     if (start_datetime && end_datetime) {
-      setValue("extent.temporal.interval[0][0]", start_datetime.split("Z")[0]);
-      setValue("extent.temporal.interval[0][1]", end_datetime.split("Z")[0]);
+      setValue("extent.temporal.interval[0][0]", handleRangeUpdate(start_datetime));
+      setValue("extent.temporal.interval[0][1]", handleRangeUpdate(end_datetime));
     }
   }, [collection, setValue, isEditMode]);
   
@@ -130,7 +138,6 @@ function CollectionForm() {
     } catch (error: unknown) {
       const apiError = error as ApiError;
 
-      // Handle error details thoroughly
       if (apiError.detail) {
         const errorDetails = apiError.detail;
         const action = isEditMode ? "editing" : "creating";
@@ -154,7 +161,7 @@ function CollectionForm() {
         } else if (errorDetails.detail && errorDetails.errors) {
           setErrorMessage(
             <Box>
-              <Text fontWeight="bold">Detail: {errorDetails.code || "Unknown Error"}</Text>
+              <Text fontWeight="bold">Detail: {errorDetails.detail || "Unknown Error"}</Text>
               <Text fontWeight="bold">Description: Validation failed for collection with ID {collectionId || "Unknown"} while {action} it.</Text>
               <Box as="ul" pl={5}>
                 {Array.isArray(errorDetails.errors) ? (
@@ -180,7 +187,6 @@ function CollectionForm() {
           setErrorMessage(JSON.stringify(errorDetails, null, 2));
         }
       } else {
-        // If the API returns error in another format
         setErrorMessage("Unknown error occurred. Please try again.");
       }
     }
@@ -292,19 +298,39 @@ function CollectionForm() {
             <Box display="flex" gap="2">
               <Box>
                 <Text>Min X</Text>
-                <Input {...register("extent.spatial.bbox[0][0]", { required: "Min X is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][0]", {
+                    required: "Min X is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Min Y</Text>
-                <Input {...register("extent.spatial.bbox[0][1]", { required: "Min Y is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][1]", {
+                    required: "Min Y is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Max X</Text>
-                <Input {...register("extent.spatial.bbox[0][2]", { required: "Max X is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][2]", {
+                    required: "Max X is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
               <Box>
                 <Text>Max Y</Text>
-                <Input {...register("extent.spatial.bbox[0][3]", { required: "Max Y is required." })} />
+                <Input
+                  {...register("extent.spatial.bbox[0][3]", {
+                    required: "Max Y is required.",
+                    setValueAs: v => parseFloat(v),
+                  })}
+                />
               </Box>
             </Box>
             {errors.extent?.spatial && <Text color="red.500">All bounding box fields are required.</Text>}
@@ -317,13 +343,15 @@ function CollectionForm() {
               <DateTimeInput
                 label="Date/time from"
                 {...register("extent.temporal.interval[0][0]", {
-                  setValueAs: handleRangeUpdate
+                  setValueAs: handleRangeUpdate,
+                  required: "Start date/time is required."
                 })}
               />
               <DateTimeInput
                 label="Date/time to"
                 {...register("extent.temporal.interval[0][1]", {
-                  setValueAs: handleRangeUpdate
+                  setValueAs: handleRangeUpdate,
+                  required: "End date/time is required."
                 })}
               />
             </Box>
@@ -375,7 +403,7 @@ function CollectionForm() {
               </Thead>
               <Tbody>
                 {fields.map((field, idx: number) => (
-                  <Tr key={field.id || idx}> {/* Using 'field.id' or a unique identifier if available */}
+                  <Tr key={field.id || idx}>
                     <Td>
                       <Input {...register(`providers.${idx}.name`)} aria-labelledby="provider_name" />
                     </Td>
