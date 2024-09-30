@@ -96,8 +96,8 @@ const defaultValues: FormValues = {
     datetime: null,
     start_datetime: "",
     end_datetime: "",
-    created: "",
-    updated: "",
+    created: "",  // Set 'created' for new items
+    updated: "",  // Always set 'updated' to current date
   },
 };
 
@@ -222,7 +222,6 @@ export default function ItemForm() {
     }
   }, [item, setValue, isNewItem]);
 
-  // Function to generate the links dynamically based on form values
   const generateLinks = (data: FormValues) => {
     return [
       {
@@ -254,14 +253,13 @@ export default function ItemForm() {
     setSuccessMessage("");
     setErrorMessage("");
 
-    // Format datetime fields for submission
     const formattedData = {
       ...data,
-      links: generateLinks(data), // Add dynamically generated links
+      links: generateLinks(data),
       properties: {
         ...data.properties,
-        created: isNewItem ? currentDate : data.properties.created, // Set 'created' only if it's a new item
-        updated: currentDate, // Always set 'updated' to the current date
+        created: isNewItem ? currentDate : data.properties.created,
+        updated: currentDate,
         datetime: data.properties.datetime ? formatDatetime(data.properties.datetime) : null,
         start_datetime: data.properties.start_datetime ? formatDatetime(data.properties.start_datetime) : null,
         end_datetime: data.properties.end_datetime ? formatDatetime(data.properties.end_datetime) : null,
@@ -380,8 +378,20 @@ export default function ItemForm() {
   const toggleJsonMode = () => {
     setJsonMode(!isJsonMode);
     if (!isJsonMode) {
-      // Include dynamically generated links in JSON before switching to JSON mode
-      const updatedJson = JSON.stringify({ ...watchedValues, links: generateLinks(watchedValues) }, null, 2);
+      // Include dynamically generated links and dates in JSON before switching to JSON mode
+      const updatedJson = JSON.stringify(
+        {
+          ...watchedValues,
+          links: generateLinks(watchedValues),
+          properties: {
+            ...watchedValues.properties,
+            created: isNewItem ? currentDate : watchedValues.properties.created,
+            updated: currentDate,
+          }
+        },
+        null,
+        2
+      );
       setJsonInput(updatedJson);
     } else {
       setSelectedCollectionId(watchedValues.collection || "");
