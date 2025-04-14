@@ -10,7 +10,6 @@ export type FormValues = {
     href?: string;
     rel?: string;
     type?: string;
-    title?: string;
     [key: string]: any;
   }>;
   assets: { [k: string]: { [key: string]: any } };
@@ -40,9 +39,9 @@ export type FormValues = {
     gsd: number;
     instruments: string[];
     datetime: string | null;
-    start_datetime?: string;
-    end_datetime?: string;
-    created?: string;
-    updated?: string;
+    start_datetime?: string | null;
+    end_datetime?: string | null;
+    created?: string | null;
+    updated?: string | null;
   }
 }

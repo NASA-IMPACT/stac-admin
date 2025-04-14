@@ -3,6 +3,8 @@ import { StacCollection } from "stac-ts";
 import Api from "../../api";
 import { LoadingState, ApiError } from "../../types";
 import { defaultData } from "./constants/updateDataDefaultValue";
+import { useAuth } from "react-oidc-context";
+
 
 type UseUpdateCollectionType = {
   update: (data: StacCollection, isEditMode: boolean) => Promise<StacCollection>;
@@ -13,6 +15,8 @@ type UseUpdateCollectionType = {
 function useUpdateCollection(): UseUpdateCollectionType {
   const [error, setError] = useState<ApiError>();
   const [state, setState] = useState<LoadingState>("IDLE");
+
+  const auth = useAuth();
 
   const update = useCallback(async (data: StacCollection, isEditMode: boolean) => {
     setState("LOADING");
@@ -41,7 +45,10 @@ function useUpdateCollection(): UseUpdateCollectionType {
     try {
       const updatedCollection: StacCollection = await Api.fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${auth.user?.access_token}`
+        },
         body: JSON.stringify(requestData),
       });
       setState("IDLE");
