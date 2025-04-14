@@ -1,15 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Box, Heading, ListItem, Text, List, Tag, Icon } from "@chakra-ui/react";
-import { MdAccessTime, MdBalance } from "react-icons/md";
+import { MdAccessTime, MdBalance, MdEdit } from "react-icons/md";
 import { useCollection, useStacSearch } from "@developmentseed/stac-react";
-
-
 import { HeadingLead, Loading } from "../../components";
 import { usePageTitle } from "../../hooks";
 import { StacCollection } from "stac-ts";
 import ItemResults from "../../components/ItemResults";
-import { MdEdit } from "react-icons/md";
 import CollectionMap from "./CollectionMap";
 
 const dateFormat: Intl.DateTimeFormatOptions = {
@@ -20,20 +17,30 @@ const dateFormat: Intl.DateTimeFormatOptions = {
 
 function CollectionDetail() {
   const { collectionId } = useParams();
+  const navigate = useNavigate();
   usePageTitle(`Collection ${collectionId}`);
-  const { collection, state } = useCollection(collectionId!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-
+  const { collection, state, error } = useCollection(collectionId || "");
   const { results, collections, setCollections, submit, ...stacSearch } = useStacSearch();
+
+  // Redirect to "sorry" page only if an error occurs AFTER loading is complete
+  useEffect(() => {
+    if (state === "ERROR" && error) {
+      navigate("/sorry", { state: { type: "collection" } });
+    }
+  }, [error, state, navigate]);
 
   // Initialize the search with the current collection ID
   useEffect(() => {
-    setCollections([ collectionId ]);
+    if (collectionId) {
+      setCollections([collectionId]);
+    }
   }, [collectionId, setCollections]);
 
   // Automatically submit whenever the collection ID changes
   useEffect(() => {
-    if (!collections) return;
-    submit();
+    if (collections) {
+      submit();
+    }
   }, [collections, submit]);
 
   const dateLabel = useMemo(() => {
@@ -60,12 +67,15 @@ function CollectionDetail() {
     return "—";
   }, [collection]);
 
-  if (!collection || state === "LOADING") {
+  if (state === "LOADING") {
     return <Loading>Loading collection...</Loading>;
   }
 
-  const { id, title, description, keywords, license } = collection as StacCollection;
+  if (!collection || state === "ERROR") {
+    return null; // Don't render anything while waiting for redirection
+  }
 
+  const { id, title, description, keywords, license } = collection as StacCollection;
 
   return (
     <>
@@ -81,23 +91,23 @@ function CollectionDetail() {
             <Text as="h2" fontSize="md" my="0" flex="1">About</Text>
             <Link to="edit/" title="Edit collection"><Icon as={MdEdit} boxSize="4" /></Link>
           </Box>
-          { (title || description) && (
+          {(title || description) && (
             <Text mt="0">
-              { title && <Text as="b">{ title } </Text> }
-              { description }
+              {title && <Text as="b">{title} </Text>}
+              {description}
             </Text>
           )}
           <Box color="gray.600" my="4">
             <Box display="flex" gap="1" alignItems="center" mb="1">
               <Icon color="gray.600" as={MdAccessTime} boxSize="4" />
-              <Text m="0">{ dateLabel }</Text>
+              <Text m="0">{dateLabel}</Text>
             </Box>
             <Box display="flex" gap="1" alignItems="center" mb="1">
               <Icon color="gray.600" as={MdBalance} boxSize="4" />
-              <Text m="0">{ license }</Text>
+              <Text m="0">{license}</Text>
             </Box>
           </Box>
-          { (keywords && keywords.length > 0) && (
+          {keywords && keywords.length > 0 && (
             <List mt="1">
               {keywords.map((keyword) => (
                 <Tag mr="1" as={ListItem} key={keyword}>{keyword}</Tag>

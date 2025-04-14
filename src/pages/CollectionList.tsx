@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
-import { TableContainer, Table, Text, Thead, Tr, Th, Td, Tbody } from "@chakra-ui/react";
+import { TableContainer, Table, Text, Thead, Tr, Th, Td, Tbody, Box, IconButton, Icon } from "@chakra-ui/react";
 import { useCollections } from "@developmentseed/stac-react";
 import type { StacCollection } from "stac-ts";
 import { Loading } from "../components";
 import { usePageTitle } from "../hooks";
+import { MdAdd } from "react-icons/md";
 
 function CollectionList() {
   usePageTitle("Collections");
@@ -12,7 +13,20 @@ function CollectionList() {
 
   return (
     <>
-      <Text as="h1">Collections</Text>
+      <Box display="flex" alignItems="center">
+        <Text as="h1" mr={4}>Collections</Text>
+        <Link 
+          to="/collections/new_collection/"
+          aria-label="Add collection"
+          onClick={e => e.stopPropagation()}
+        >
+          <IconButton
+            aria-label="Add new collection"
+            icon={<Icon as={MdAdd} />}
+            size="md"
+          />
+        </Link>
+      </Box>
       <TableContainer>
         <Table size="sm">
           <Thead>
@@ -22,7 +36,7 @@ function CollectionList() {
             </Tr>
           </Thead>
           <Tbody>
-            { !collections || state === "LOADING" ? (
+            {!collections || state === "LOADING" ? (
               <Tr>
                 <Td colSpan={2}>
                   <Loading>Loading collections...</Loading>

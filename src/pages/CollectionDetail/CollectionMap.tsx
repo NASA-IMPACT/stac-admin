@@ -36,7 +36,7 @@ function CollectionMap({ collection }: CollectionMapProps) {
   const dataExtents = useMemo(() => {
     if (!collection) return;
     if (collection.extent.spatial.bbox.length > 1) {
-      const [_, ...data] = collection.extent.spatial.bbox;
+      const [, ...data] = collection.extent.spatial.bbox;
       return {
         type: "FeatureCollection",
         features: data.map(([x1, y1, x2, y2]) => bboxPolygon([x1, y1, x2, y2]))

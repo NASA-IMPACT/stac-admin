@@ -1,28 +1,34 @@
+// import { useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+
 type RolesProps = { 
   roles: {
     spec: {
-      label: "Purpose",
+      label: string;
       mapping: {
-        data: "Data"
-        graphic: "Illustration"
-        metadata: "Metadata"
-        overview: "Overview"
-        thumbnail: "Preview"
-        visual: "Visualization"
-        [key: string]: string
-      }
-    },
+        data: string;
+        graphic: string;
+        metadata: string;
+        overview: string;
+        thumbnail: string;
+        visual: string;
+        [key: string]: string;
+      };
+    };
     value: string[];
   }
 };
 
 function Roles({ roles }: RolesProps) {
+  // const navigate = useNavigate();
+  // Safe rendering in case data is valid
   const { value, spec } = roles;
   const { mapping } = spec;
+
   return (
     <>
       {value.map((val) => mapping[val] || val).join(", ")}
-    </>  
+    </>
   );
 }
 

@@ -2,8 +2,8 @@ import { Link as RouterLink } from "react-router-dom";
 import { Box, List, ListItem, Link } from "@chakra-ui/react";
 
 type NavItemProps = React.PropsWithChildren<{
-  to: string
-}>
+  to: string;
+}>;
 
 function NavItem({ to, children }: NavItemProps) {
   return (
@@ -23,12 +23,15 @@ function NavItem({ to, children }: NavItemProps) {
 }
 
 function MainNavigation() {
+  const workflowsEnabled = process.env.REACT_APP_WORKFLOWS === "True";
+
   return (
     <Box as="nav" aria-label="Main">
       <List my="0" display="flex">
         <NavItem to="/">Home</NavItem>
         <NavItem to="/collections/">Collections</NavItem>
         <NavItem to="/items/">Items</NavItem>
+        {workflowsEnabled && <NavItem to="/workflows/">Workflows</NavItem>}
       </List>
     </Box>
   );
